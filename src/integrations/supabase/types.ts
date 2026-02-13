@@ -14,16 +14,263 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      achievements: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          title: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          title: string
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          title?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      certificates: {
+        Row: {
+          certificate_url: string | null
+          created_at: string
+          id: string
+          payment_id: string | null
+          user_id: string
+          video_id: string | null
+        }
+        Insert: {
+          certificate_url?: string | null
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          user_id: string
+          video_id?: string | null
+        }
+        Update: {
+          certificate_url?: string | null
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          user_id?: string
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          method: string
+          status: Database["public"]["Enums"]["payment_status"]
+          transaction_id: string | null
+          user_id: string
+          video_id: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          method?: string
+          status?: Database["public"]["Enums"]["payment_status"]
+          transaction_id?: string | null
+          user_id: string
+          video_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          method?: string
+          status?: Database["public"]["Enums"]["payment_status"]
+          transaction_id?: string | null
+          user_id?: string
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          date_of_birth: string | null
+          full_name: string
+          gender: string | null
+          guardian_contact: string | null
+          id: string
+          phone: string | null
+          sport: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          full_name: string
+          gender?: string | null
+          guardian_contact?: string | null
+          id?: string
+          phone?: string | null
+          sport?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          full_name?: string
+          gender?: string | null
+          guardian_contact?: string | null
+          id?: string
+          phone?: string | null
+          sport?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scout_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          organization: string | null
+          updated_at: string
+          user_id: string
+          verification_status: Database["public"]["Enums"]["scout_status"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization?: string | null
+          updated_at?: string
+          user_id: string
+          verification_status?: Database["public"]["Enums"]["scout_status"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization?: string | null
+          updated_at?: string
+          user_id?: string
+          verification_status?: Database["public"]["Enums"]["scout_status"]
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      videos: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          position_tags: string[] | null
+          status: Database["public"]["Enums"]["video_status"]
+          title: string | null
+          trait_tags: string[] | null
+          updated_at: string
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          position_tags?: string[] | null
+          status?: Database["public"]["Enums"]["video_status"]
+          title?: string | null
+          trait_tags?: string[] | null
+          updated_at?: string
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          position_tags?: string[] | null
+          status?: Database["public"]["Enums"]["video_status"]
+          title?: string | null
+          trait_tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "player" | "scout" | "admin"
+      payment_status: "pending" | "success" | "failed"
+      scout_status: "pending" | "active" | "rejected"
+      video_status: "draft" | "pending_payment" | "live" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +397,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["player", "scout", "admin"],
+      payment_status: ["pending", "success", "failed"],
+      scout_status: ["pending", "active", "rejected"],
+      video_status: ["draft", "pending_payment", "live", "rejected"],
+    },
   },
 } as const
