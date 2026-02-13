@@ -1,7 +1,8 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X, Zap, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 const navLinks = [
   { label: "Home", path: "/" },
@@ -13,6 +14,13 @@ const navLinks = [
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, role, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass">
@@ -37,11 +45,24 @@ const Navbar = () => {
               {l.label}
             </Link>
           ))}
-          <Link to="/auth">
-            <Button size="sm" className="bg-primary text-primary-foreground font-semibold hover:bg-primary/90">
-              Get Started
-            </Button>
-          </Link>
+          {user ? (
+            <div className="flex items-center gap-3">
+              <Link to={role === "scout" ? "/scout" : "/player"}>
+                <Button size="sm" variant="outline" className="border-primary/40 text-primary hover:bg-primary/10">
+                  Dashboard
+                </Button>
+              </Link>
+              <Button size="sm" variant="ghost" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <Link to="/auth">
+              <Button size="sm" className="bg-primary text-primary-foreground font-semibold hover:bg-primary/90">
+                Get Started
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -66,11 +87,24 @@ const Navbar = () => {
                 {l.label}
               </Link>
             ))}
-            <Link to="/auth" onClick={() => setOpen(false)}>
-              <Button size="sm" className="w-full bg-primary text-primary-foreground font-semibold">
-                Get Started
-              </Button>
-            </Link>
+            {user ? (
+              <>
+                <Link to={role === "scout" ? "/scout" : "/player"} onClick={() => setOpen(false)}>
+                  <Button size="sm" variant="outline" className="w-full border-primary/40 text-primary">
+                    Dashboard
+                  </Button>
+                </Link>
+                <Button size="sm" variant="ghost" onClick={() => { handleSignOut(); setOpen(false); }} className="text-muted-foreground">
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <Link to="/auth" onClick={() => setOpen(false)}>
+                <Button size="sm" className="w-full bg-primary text-primary-foreground font-semibold">
+                  Get Started
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       )}
