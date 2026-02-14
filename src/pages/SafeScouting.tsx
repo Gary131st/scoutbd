@@ -20,7 +20,7 @@ const SafeScouting = () => {
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex gap-3">
                 <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span>TalentBridge BD <strong className="text-foreground">never</strong> asks players for extra money for trials, beyond the ৳100 registration fee.</span>
+                <span>Scout BD <strong className="text-foreground">never</strong> asks players for extra money for trials, beyond the ৳100 registration fee.</span>
               </li>
               <li className="flex gap-3">
                 <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
@@ -68,11 +68,11 @@ const SafeScouting = () => {
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-3 text-muted-foreground">
                 <Mail className="h-4 w-4 text-primary" />
-                <span>Legal: <strong className="text-foreground">legal@talentbridgebd.com</strong></span>
+                <span>Legal: <strong className="text-foreground">legal@scoutbd.com</strong></span>
               </div>
               <div className="flex items-center gap-3 text-muted-foreground">
                 <Mail className="h-4 w-4 text-primary" />
-                <span>Support: <strong className="text-foreground">support@talentbridgebd.com</strong></span>
+                <span>Support: <strong className="text-foreground">support@scoutbd.com</strong></span>
               </div>
               <div className="flex items-center gap-3 text-muted-foreground">
                 <Phone className="h-4 w-4 text-primary" />

@@ -23,7 +23,7 @@ const Mission = () => (
             <Heart className="h-8 w-8 text-primary mb-3" />
             <h2 className="font-display text-2xl text-foreground mb-3">OUR APPROACH</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              TalentBridge BD creates a transparent digital bridge between grassroots talent and professional scouts. Every player gets the same platform. Every scout is verified. Every interaction is tracked. No middlemen, no corruption — just pure talent.
+              Scout BD creates a transparent digital bridge between grassroots talent and professional scouts. Every player gets the same platform. Every scout is verified. Every interaction is tracked. No middlemen, no corruption — just pure talent.
             </p>
           </div>
 

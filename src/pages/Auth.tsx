@@ -46,7 +46,7 @@ const Auth = () => {
             body: { role, sport, phone: form.phone, gender: form.gender, full_name: form.name },
           });
           if (res.error) throw new Error(res.error.message);
-          toast({ title: "Account created!", description: role === "scout" ? "Your account is pending admin verification." : "Welcome to TalentBridge BD!" });
+          toast({ title: "Account created!", description: role === "scout" ? "Your account is pending admin verification." : "Welcome to Scout BD!" });
           navigate(role === "scout" ? "/scout" : "/player");
         } else {
           toast({ title: "Check your email", description: "Please verify your email address to continue." });
@@ -69,7 +69,7 @@ const Auth = () => {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">
             <Zap className="h-6 w-6 text-primary" />
-            <span className="font-display text-2xl text-foreground">TALENTBRIDGE BD</span>
+            <span className="font-display text-2xl text-foreground">SCOUT BD</span>
           </Link>
           <h1 className="font-display text-3xl text-foreground">
             {isLogin ? "WELCOME BACK" : "JOIN THE GAME"}
