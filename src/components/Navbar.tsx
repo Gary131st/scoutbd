@@ -47,7 +47,7 @@ const Navbar = () => {
           ))}
           {user ? (
             <div className="flex items-center gap-3">
-              <Link to={role === "scout" ? "/scout" : "/player"}>
+              <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"}>
                 <Button size="sm" variant="outline" className="border-primary/40 text-primary hover:bg-primary/10">
                   Dashboard
                 </Button>
@@ -89,7 +89,7 @@ const Navbar = () => {
             ))}
             {user ? (
               <>
-                <Link to={role === "scout" ? "/scout" : "/player"} onClick={() => setOpen(false)}>
+                <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"} onClick={() => setOpen(false)}>
                   <Button size="sm" variant="outline" className="w-full border-primary/40 text-primary">
                     Dashboard
                   </Button>

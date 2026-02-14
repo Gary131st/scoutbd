@@ -14,6 +14,7 @@ import PlayerResume from "./pages/PlayerResume";
 import SafeScouting from "./pages/SafeScouting";
 import Mission from "./pages/Mission";
 import FAQ from "./pages/FAQ";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/safe-scouting" element={<SafeScouting />} />
             <Route path="/mission" element={<Mission />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Footer />

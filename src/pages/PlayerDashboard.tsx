@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Upload, Tag, CreditCard, Award, Video, Loader2, Download, CheckCircle } from "lucide-react";
+import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -114,26 +115,64 @@ const PlayerDashboard = () => {
   };
 
   const downloadCertificate = () => {
-    // Generate a simple certificate as downloadable HTML (in production, use PDF library)
-    const cert = `
-      <html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#f0fdf4;">
-        <h1 style="color:#16a34a;">🏆 Digital Participation Certificate</h1>
-        <hr/>
-        <p style="font-size:18px;">This certifies that</p>
-        <h2>${user?.user_metadata?.full_name || "Player"}</h2>
-        <p>has successfully registered and submitted a highlight video on <strong>TalentBridge BD</strong>.</p>
-        <p>Transaction ID: <strong>${transactionId}</strong></p>
-        <p>Date: ${new Date().toLocaleDateString()}</p>
-        <br/><p style="color:#666;font-size:12px;">TalentBridge BD — Digitizing Bangladesh Sports</p>
-      </body></html>
-    `;
-    const blob = new Blob([cert], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "TalentBridge_Certificate.html";
-    a.click();
-    URL.revokeObjectURL(url);
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const w = doc.internal.pageSize.getWidth();
+    const h = doc.internal.pageSize.getHeight();
+    const name = user?.user_metadata?.full_name || "Player";
+
+    // Background
+    doc.setFillColor(240, 253, 244);
+    doc.rect(0, 0, w, h, "F");
+
+    // Border
+    doc.setDrawColor(22, 163, 74);
+    doc.setLineWidth(2);
+    doc.rect(10, 10, w - 20, h - 20);
+
+    // Title
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(32);
+    doc.setTextColor(22, 163, 74);
+    doc.text("DIGITAL PARTICIPATION CERTIFICATE", w / 2, 45, { align: "center" });
+
+    // Decorative line
+    doc.setLineWidth(0.5);
+    doc.line(w / 2 - 60, 52, w / 2 + 60, 52);
+
+    // Body
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(14);
+    doc.setTextColor(60, 60, 60);
+    doc.text("This certifies that", w / 2, 70, { align: "center" });
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(26);
+    doc.setTextColor(30, 30, 30);
+    doc.text(name, w / 2, 85, { align: "center" });
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(80, 80, 80);
+    doc.text("has successfully registered and submitted a highlight video on", w / 2, 100, { align: "center" });
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(22, 163, 74);
+    doc.text("TalentBridge BD", w / 2, 112, { align: "center" });
+
+    // Transaction & date
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Transaction ID: ${transactionId}`, w / 2, 130, { align: "center" });
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, w / 2, 138, { align: "center" });
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text("TalentBridge BD — Digitizing Bangladesh Sports", w / 2, h - 18, { align: "center" });
+
+    doc.save("TalentBridge_Certificate.pdf");
   };
 
   if (authLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
