@@ -8,7 +8,7 @@ const Footer = () => (
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Zap className="h-5 w-5 text-primary" />
-            <span className="font-display text-xl text-foreground">TALENTBRIDGE BD</span>
+            <span className="font-display text-xl text-foreground">SCOUT BD</span>
           </div>
           <p className="text-sm text-muted-foreground">
             Digitizing Bangladesh sports. Connecting talent with opportunity, safely and transparently.
@@ -24,13 +24,13 @@ const Footer = () => (
         </div>
         <div>
           <h4 className="font-display text-lg text-foreground mb-3">CONTACT</h4>
-          <p className="text-sm text-muted-foreground">support@talentbridgebd.com</p>
-          <p className="text-sm text-muted-foreground">Legal: legal@talentbridgebd.com</p>
+          <p className="text-sm text-muted-foreground">support@scoutbd.com</p>
+          <p className="text-sm text-muted-foreground">Legal: legal@scoutbd.com</p>
           <p className="text-sm text-muted-foreground mt-2">Dhaka, Bangladesh</p>
         </div>
       </div>
       <div className="mt-8 pt-6 border-t border-border text-center text-xs text-muted-foreground">
-        © 2026 TalentBridge BD. All rights reserved.
+        © 2026 Scout BD. All rights reserved.
       </div>
     </div>
   </footer>

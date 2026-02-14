@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Users, Video, DollarSign, CheckCircle, XCircle, Clock, Loader2, Eye } from "lucide-react";
+import { Shield, Users, Video, DollarSign, CheckCircle, XCircle, Clock, Loader2, Eye, AlertTriangle, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,6 +29,18 @@ interface VideoRow {
   full_name?: string;
 }
 
+interface MessageRow {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  flagged: boolean;
+  flag_reason: string | null;
+  created_at: string;
+  sender_name?: string;
+  receiver_name?: string;
+}
+
 interface Stats {
   totalPlayers: number;
   totalScouts: number;
@@ -36,12 +48,14 @@ interface Stats {
   pendingScouts: number;
   liveVideos: number;
   totalRevenue: number;
+  flaggedMessages: number;
 }
 
 const AdminDashboard = () => {
   const { user, role, loading: authLoading } = useAuth();
   const [scouts, setScouts] = useState<ScoutRow[]>([]);
   const [videos, setVideos] = useState<VideoRow[]>([]);
+  const [messages, setMessages] = useState<MessageRow[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -58,22 +72,25 @@ const AdminDashboard = () => {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [scoutRes, videoRes, roleRes, paymentRes] = await Promise.all([
+    const [scoutRes, videoRes, roleRes, paymentRes, msgRes] = await Promise.all([
       supabase.from("scout_profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("videos").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("role"),
       supabase.from("payments").select("amount, status"),
+      supabase.from("messages").select("*").order("created_at", { ascending: false }).limit(100),
     ]);
 
     const scoutData = scoutRes.data || [];
     const videoData = videoRes.data || [];
     const roles = roleRes.data || [];
     const payments = paymentRes.data || [];
+    const msgData = msgRes.data || [];
 
-    // Fetch names for scouts
+    // Gather all user IDs for name lookup
     const scoutUserIds = scoutData.map((s) => s.user_id);
     const videoUserIds = [...new Set(videoData.map((v) => v.user_id))];
-    const allUserIds = [...new Set([...scoutUserIds, ...videoUserIds])];
+    const msgUserIds = [...new Set(msgData.flatMap((m) => [m.sender_id, m.receiver_id]))];
+    const allUserIds = [...new Set([...scoutUserIds, ...videoUserIds, ...msgUserIds])];
 
     let profileMap = new Map<string, string>();
     if (allUserIds.length > 0) {
@@ -86,6 +103,11 @@ const AdminDashboard = () => {
 
     setScouts(scoutData.map((s) => ({ ...s, full_name: profileMap.get(s.user_id) || "Unknown" })));
     setVideos(videoData.map((v) => ({ ...v, full_name: profileMap.get(v.user_id) || "Unknown" })));
+    setMessages(msgData.map((m) => ({
+      ...m,
+      sender_name: profileMap.get(m.sender_id) || "Unknown",
+      receiver_name: profileMap.get(m.receiver_id) || "Unknown",
+    })));
 
     setStats({
       totalPlayers: roles.filter((r) => r.role === "player").length,
@@ -94,6 +116,7 @@ const AdminDashboard = () => {
       pendingScouts: scoutData.filter((s) => s.verification_status === "pending").length,
       liveVideos: videoData.filter((v) => v.status === "live").length,
       totalRevenue: payments.filter((p) => p.status === "success").reduce((sum, p) => sum + Number(p.amount), 0),
+      flaggedMessages: msgData.filter((m) => m.flagged).length,
     });
 
     setLoading(false);
@@ -127,6 +150,23 @@ const AdminDashboard = () => {
     }
   };
 
+  const toggleFlag = async (msgId: string, currentlyFlagged: boolean) => {
+    const { error } = await supabase
+      .from("messages")
+      .update({
+        flagged: !currentlyFlagged,
+        flag_reason: !currentlyFlagged ? "Flagged by admin for review" : null,
+      })
+      .eq("id", msgId);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: !currentlyFlagged ? "Message flagged" : "Flag removed" });
+      fetchAll();
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -146,16 +186,17 @@ const AdminDashboard = () => {
 
           {/* Stats */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
               {[
-                { label: "Players", value: stats.totalPlayers, icon: Users, color: "text-primary" },
-                { label: "Scouts", value: `${stats.activeScouts}/${stats.totalScouts}`, icon: Shield, color: "text-primary" },
-                { label: "Live Videos", value: stats.liveVideos, icon: Video, color: "text-primary" },
-                { label: "Revenue", value: `৳${stats.totalRevenue}`, icon: DollarSign, color: "text-primary" },
+                { label: "Players", value: stats.totalPlayers, icon: Users },
+                { label: "Scouts", value: `${stats.activeScouts}/${stats.totalScouts}`, icon: Shield },
+                { label: "Live Videos", value: stats.liveVideos, icon: Video },
+                { label: "Revenue", value: `৳${stats.totalRevenue}`, icon: DollarSign },
+                { label: "Flagged", value: stats.flaggedMessages, icon: AlertTriangle },
               ].map((s) => (
                 <div key={s.label} className="bg-card border border-border rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <s.icon className={`h-4 w-4 ${s.color}`} />
+                    <s.icon className="h-4 w-4 text-primary" />
                     <span className="text-xs text-muted-foreground uppercase tracking-wide">{s.label}</span>
                   </div>
                   <p className="font-display text-3xl text-foreground">{s.value}</p>
@@ -167,10 +208,13 @@ const AdminDashboard = () => {
           <Tabs defaultValue="scouts" className="space-y-6">
             <TabsList className="bg-card border border-border">
               <TabsTrigger value="scouts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                Scout Verification ({stats?.pendingScouts || 0} pending)
+                Scouts ({stats?.pendingScouts || 0} pending)
               </TabsTrigger>
               <TabsTrigger value="videos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                Video Moderation
+                Videos
+              </TabsTrigger>
+              <TabsTrigger value="safety" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                Safety Log ({stats?.flaggedMessages || 0} flagged)
               </TabsTrigger>
             </TabsList>
 
@@ -257,6 +301,61 @@ const AdminDashboard = () => {
                         </>
                       )}
                     </div>
+                  </div>
+                ))
+              )}
+            </TabsContent>
+
+            {/* Safety Log Tab */}
+            <TabsContent value="safety" className="space-y-3">
+              <div className="bg-accent/10 border border-accent/30 rounded-xl p-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-accent" />
+                  <p className="text-sm text-muted-foreground">
+                    All scout-player messages are logged here for safety monitoring. Flag suspicious interactions to protect players.
+                  </p>
+                </div>
+              </div>
+
+              {messages.length === 0 ? (
+                <p className="text-muted-foreground text-center py-12">No messages recorded yet.</p>
+              ) : (
+                messages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`bg-card border rounded-xl p-4 flex items-start justify-between gap-4 ${
+                      m.flagged ? "border-accent/50 bg-accent/5" : "border-border"
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <MessageSquare className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-semibold text-foreground">{m.sender_name}</span>
+                        <span className="text-xs text-muted-foreground">→</span>
+                        <span className="text-sm font-semibold text-foreground">{m.receiver_name}</span>
+                        <span className="text-xs text-muted-foreground ml-auto">
+                          {new Date(m.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{m.content}</p>
+                      {m.flagged && m.flag_reason && (
+                        <div className="flex items-center gap-1 mt-2">
+                          <AlertTriangle className="h-3 w-3 text-accent" />
+                          <span className="text-xs text-accent">{m.flag_reason}</span>
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleFlag(m.id, m.flagged)}
+                      className={m.flagged
+                        ? "border-primary/40 text-primary hover:bg-primary/10"
+                        : "border-accent/40 text-accent hover:bg-accent/10"
+                      }
+                    >
+                      {m.flagged ? "Unflag" : "Flag"}
+                    </Button>
                   </div>
                 ))
               )}

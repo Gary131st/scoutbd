@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Upload, Tag, CreditCard, Award, Video, Loader2, Download, CheckCircle } from "lucide-react";
+import { Upload, Tag, CreditCard, Award, Video, Loader2, Download, CheckCircle, FileText } from "lucide-react";
 import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,7 @@ const PlayerDashboard = () => {
   const [videoStatus, setVideoStatus] = useState<string | null>(null);
   const [paymentDone, setPaymentDone] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
   const [sport, setSport] = useState<string>("football");
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -40,7 +41,6 @@ const PlayerDashboard = () => {
       return;
     }
     if (user) {
-      // Fetch profile sport and existing video
       supabase.from("profiles").select("sport").eq("user_id", user.id).maybeSingle().then(({ data }) => {
         if (data?.sport) setSport(data.sport);
       });
@@ -106,6 +106,7 @@ const PlayerDashboard = () => {
       setPaymentDone(true);
       setVideoStatus("live");
       setTransactionId(data.transaction_id);
+      setPaymentId(data.payment_id);
       toast({ title: "Payment successful! ✅", description: `Transaction: ${data.transaction_id}` });
     } catch (err: any) {
       toast({ title: "Payment failed", description: err.message, variant: "destructive" });
@@ -120,26 +121,20 @@ const PlayerDashboard = () => {
     const h = doc.internal.pageSize.getHeight();
     const name = user?.user_metadata?.full_name || "Player";
 
-    // Background
     doc.setFillColor(240, 253, 244);
     doc.rect(0, 0, w, h, "F");
-
-    // Border
     doc.setDrawColor(22, 163, 74);
     doc.setLineWidth(2);
     doc.rect(10, 10, w - 20, h - 20);
 
-    // Title
     doc.setFont("helvetica", "bold");
     doc.setFontSize(32);
     doc.setTextColor(22, 163, 74);
     doc.text("DIGITAL PARTICIPATION CERTIFICATE", w / 2, 45, { align: "center" });
 
-    // Decorative line
     doc.setLineWidth(0.5);
     doc.line(w / 2 - 60, 52, w / 2 + 60, 52);
 
-    // Body
     doc.setFont("helvetica", "normal");
     doc.setFontSize(14);
     doc.setTextColor(60, 60, 60);
@@ -158,21 +153,104 @@ const PlayerDashboard = () => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(22, 163, 74);
-    doc.text("TalentBridge BD", w / 2, 112, { align: "center" });
+    doc.text("Scout BD", w / 2, 112, { align: "center" });
 
-    // Transaction & date
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
     doc.text(`Transaction ID: ${transactionId}`, w / 2, 130, { align: "center" });
     doc.text(`Date: ${new Date().toLocaleDateString()}`, w / 2, 138, { align: "center" });
 
-    // Footer
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
-    doc.text("TalentBridge BD — Digitizing Bangladesh Sports", w / 2, h - 18, { align: "center" });
+    doc.text("Scout BD — Digitizing Bangladesh Sports", w / 2, h - 18, { align: "center" });
 
-    doc.save("TalentBridge_Certificate.pdf");
+    doc.save("ScoutBD_Certificate.pdf");
+  };
+
+  const downloadInvoice = () => {
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const w = doc.internal.pageSize.getWidth();
+    const name = user?.user_metadata?.full_name || "Player";
+    const email = user?.email || "";
+    const date = new Date().toLocaleDateString();
+
+    // Header
+    doc.setFillColor(22, 163, 74);
+    doc.rect(0, 0, w, 40, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(24);
+    doc.setTextColor(255, 255, 255);
+    doc.text("SCOUT BD", 20, 25);
+    doc.setFontSize(10);
+    doc.text("INVOICE", w - 20, 25, { align: "right" });
+
+    // Invoice details
+    doc.setTextColor(60, 60, 60);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    let y = 55;
+    doc.text(`Invoice Date: ${date}`, 20, y);
+    doc.text(`Transaction ID: ${transactionId}`, 20, y + 7);
+    doc.text(`Payment ID: ${paymentId || "N/A"}`, 20, y + 14);
+
+    // Bill to
+    y = 90;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("BILL TO", 20, y);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(name, 20, y + 8);
+    doc.text(email, 20, y + 15);
+
+    // Table header
+    y = 125;
+    doc.setFillColor(245, 245, 245);
+    doc.rect(20, y, w - 40, 10, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+    doc.text("DESCRIPTION", 25, y + 7);
+    doc.text("QTY", 120, y + 7, { align: "center" });
+    doc.text("AMOUNT", w - 25, y + 7, { align: "right" });
+
+    // Table row
+    y += 15;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(60, 60, 60);
+    doc.text("Video Registration & Participation Fee", 25, y);
+    doc.text("1", 120, y, { align: "center" });
+    doc.text("৳100.00", w - 25, y, { align: "right" });
+
+    // Divider
+    y += 10;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, y, w - 20, y);
+
+    // Total
+    y += 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("TOTAL", 120, y, { align: "center" });
+    doc.setTextColor(22, 163, 74);
+    doc.text("৳100.00", w - 25, y, { align: "right" });
+
+    // Payment method
+    y += 15;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    doc.text("Payment Method: bKash", 20, y);
+    doc.text("Status: PAID", 20, y + 7);
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(170, 170, 170);
+    doc.text("Scout BD — Digitizing Bangladesh Sports", w / 2, 280, { align: "center" });
+    doc.text("support@scoutbd.com", w / 2, 285, { align: "center" });
+
+    doc.save("ScoutBD_Invoice.pdf");
   };
 
   if (authLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -334,19 +412,24 @@ const PlayerDashboard = () => {
               </div>
             )}
 
-            {/* Certificate */}
+            {/* Certificate & Invoice */}
             {paymentDone && (
               <div className="bg-card border border-border rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Award className="h-5 w-5 text-primary" />
-                  <h2 className="font-display text-xl text-foreground">DIGITAL CERTIFICATE</h2>
+                  <h2 className="font-display text-xl text-foreground">DOCUMENTS</h2>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Your video is now live! Download your Digital Participation Certificate below.
+                  Your video is now live! Download your certificate and invoice below.
                 </p>
-                <Button onClick={downloadCertificate} variant="outline" className="border-primary/40 text-primary hover:bg-primary/10">
-                  <Download className="h-4 w-4 mr-2" /> Download Certificate
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button onClick={downloadCertificate} variant="outline" className="border-primary/40 text-primary hover:bg-primary/10">
+                    <Download className="h-4 w-4 mr-2" /> Download Certificate
+                  </Button>
+                  <Button onClick={downloadInvoice} variant="outline" className="border-primary/40 text-primary hover:bg-primary/10">
+                    <FileText className="h-4 w-4 mr-2" /> Download Invoice
+                  </Button>
+                </div>
               </div>
             )}
           </div>

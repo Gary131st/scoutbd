@@ -28,7 +28,7 @@ const Navbar = () => {
         <Link to="/" className="flex items-center gap-2">
           <Zap className="h-6 w-6 text-primary" />
           <span className="font-display text-2xl tracking-wider text-foreground">
-            TALENTBRIDGE <span className="text-primary">BD</span>
+            SCOUT <span className="text-primary">BD</span>
           </span>
         </Link>
 
