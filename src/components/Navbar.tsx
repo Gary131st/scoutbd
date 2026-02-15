@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Menu, X, Zap, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import NotificationBell from "@/components/NotificationBell";
 
 const navLinks = [
   { label: "Home", path: "/" },
@@ -47,6 +48,7 @@ const Navbar = () => {
           ))}
           {user ? (
             <div className="flex items-center gap-3">
+              <NotificationBell />
               <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"}>
                 <Button size="sm" variant="outline" className="border-primary/40 text-primary hover:bg-primary/10">
                   Dashboard
@@ -89,6 +91,10 @@ const Navbar = () => {
             ))}
             {user ? (
               <>
+                <div className="flex items-center gap-2">
+                  <NotificationBell />
+                  <span className="text-sm text-muted-foreground">Notifications</span>
+                </div>
                 <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"} onClick={() => setOpen(false)}>
                   <Button size="sm" variant="outline" className="w-full border-primary/40 text-primary">
                     Dashboard
