@@ -113,6 +113,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          read?: boolean
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -168,6 +201,7 @@ export type Database = {
           sport: string | null
           updated_at: string
           user_id: string
+          username: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -182,6 +216,7 @@ export type Database = {
           sport?: string | null
           updated_at?: string
           user_id: string
+          username?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -196,6 +231,7 @@ export type Database = {
           sport?: string | null
           updated_at?: string
           user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -223,6 +259,39 @@ export type Database = {
           updated_at?: string
           user_id?: string
           verification_status?: Database["public"]["Enums"]["scout_status"]
+        }
+        Relationships: []
+      }
+      scout_requests: {
+        Row: {
+          admin_response: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          player_id: string
+          scout_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_response?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          player_id: string
+          scout_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_response?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          player_id?: string
+          scout_id?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
