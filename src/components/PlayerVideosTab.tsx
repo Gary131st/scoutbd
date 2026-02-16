@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Play, Loader2 } from "lucide-react";
+import { Play, Loader2, Heart, Eye, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface PlayerVideo {
   id: string;
@@ -15,6 +16,7 @@ interface PlayerVideo {
   trait_tags: string[];
   full_name: string;
   sport: string;
+  avatar_url: string;
 }
 
 const PlayerVideosTab = () => {
@@ -22,6 +24,8 @@ const PlayerVideosTab = () => {
   const navigate = useNavigate();
   const [videos, setVideos] = useState<PlayerVideo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [selectedVideo, setSelectedVideo] = useState<PlayerVideo | null>(null);
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -32,14 +36,13 @@ const PlayerVideosTab = () => {
 
       if (!vids || vids.length === 0) { setVideos([]); setLoading(false); return; }
 
-      // Exclude own videos
       const otherVids = vids.filter((v) => v.user_id !== user?.id);
       const userIds = [...new Set(otherVids.map((v) => v.user_id))];
 
-      let profileMap = new Map<string, { full_name: string; sport: string }>();
+      let profileMap = new Map<string, { full_name: string; sport: string; avatar_url: string }>();
       if (userIds.length > 0) {
-        const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, sport").in("user_id", userIds);
-        (profiles || []).forEach((p) => profileMap.set(p.user_id, { full_name: p.full_name, sport: p.sport || "football" }));
+        const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, sport, avatar_url").in("user_id", userIds);
+        (profiles || []).forEach((p) => profileMap.set(p.user_id, { full_name: p.full_name, sport: p.sport || "football", avatar_url: p.avatar_url || "" }));
       }
 
       setVideos(otherVids.map((v) => ({
@@ -48,44 +51,150 @@ const PlayerVideosTab = () => {
         trait_tags: v.trait_tags || [],
         full_name: profileMap.get(v.user_id)?.full_name || "Unknown",
         sport: profileMap.get(v.user_id)?.sport || "football",
+        avatar_url: profileMap.get(v.user_id)?.avatar_url || "",
       })));
       setLoading(false);
     };
     fetchVideos();
   }, [user]);
 
+  const filtered = videos.filter((v) =>
+    !search || v.full_name.toLowerCase().includes(search.toLowerCase()) ||
+    v.position_tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))
+  );
+
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
-  if (videos.length === 0) return <p className="text-center text-muted-foreground py-12">No other player videos available yet.</p>;
-
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {videos.map((v, i) => (
-        <motion.div
-          key={v.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.05 }}
-          onClick={() => navigate(`/resume/${v.user_id}`)}
-          className="bg-card border border-border rounded-xl overflow-hidden group hover:border-primary/40 transition-all cursor-pointer"
-        >
-          <div className="relative aspect-video bg-secondary flex items-center justify-center">
-            {v.video_url ? (
-              <video src={v.video_url} className="w-full h-full object-cover" muted />
-            ) : (
-              <Play className="h-8 w-8 text-muted-foreground" />
-            )}
-            <Badge className="absolute top-2 left-2 bg-primary/20 text-primary border-0 text-xs">{v.sport}</Badge>
-          </div>
-          <div className="p-4">
-            <h3 className="font-semibold text-foreground mb-2">{v.full_name}</h3>
-            <div className="flex flex-wrap gap-1.5">
-              {v.position_tags.map((t) => <Badge key={t} variant="outline" className="text-xs border-primary/30 text-primary">{t}</Badge>)}
-              {v.trait_tags.slice(0, 2).map((t) => <Badge key={t} variant="outline" className="text-xs border-border text-muted-foreground">{t}</Badge>)}
-            </div>
-          </div>
-        </motion.div>
-      ))}
+    <div className="space-y-4">
+      {/* Search bar - Instagram style */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search players, positions..."
+          className="pl-10 bg-card border-border rounded-full"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      {filtered.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">No player videos available yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
+          {filtered.map((v, i) => (
+            <motion.div
+              key={v.id}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.03 }}
+              className="relative aspect-square bg-secondary overflow-hidden cursor-pointer group"
+              onClick={() => setSelectedVideo(v)}
+            >
+              {v.video_url ? (
+                <video src={v.video_url} className="w-full h-full object-cover" muted />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Play className="h-8 w-8 text-muted-foreground" />
+                </div>
+              )}
+              {/* Hover overlay */}
+              <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                <div className="flex items-center gap-1 text-foreground font-semibold text-sm">
+                  <Eye className="h-4 w-4" /> View
+                </div>
+              </div>
+              {/* Sport badge */}
+              <Badge className="absolute top-2 left-2 bg-background/70 text-foreground border-0 text-[10px] backdrop-blur-sm">
+                {v.sport}
+              </Badge>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Video detail modal - Instagram style */}
+      <AnimatePresence>
+        {selectedVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setSelectedVideo(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-card border border-border rounded-2xl overflow-hidden max-w-lg w-full max-h-[90vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center gap-3 p-4 border-b border-border">
+                <div className="w-9 h-9 rounded-full bg-secondary overflow-hidden border border-border">
+                  {selectedVideo.avatar_url ? (
+                    <img src={selectedVideo.avatar_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs font-bold">
+                      {selectedVideo.full_name.charAt(0)}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{selectedVideo.full_name}</p>
+                  <p className="text-[11px] text-muted-foreground">{selectedVideo.sport}</p>
+                </div>
+                <button
+                  onClick={() => setSelectedVideo(null)}
+                  className="ml-auto text-muted-foreground hover:text-foreground text-lg"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Video */}
+              <div className="aspect-video bg-secondary">
+                {selectedVideo.video_url ? (
+                  <video src={selectedVideo.video_url} className="w-full h-full object-cover" controls autoPlay muted />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Play className="h-12 w-12 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+
+              {/* Details */}
+              <div className="p-4 space-y-3 overflow-y-auto">
+                <div className="flex items-center gap-3">
+                  <button className="hover:scale-110 transition-transform">
+                    <Heart className="h-6 w-6 text-foreground" />
+                  </button>
+                  <button onClick={() => navigate(`/resume/${selectedVideo.user_id}`)} className="text-sm text-primary font-medium hover:underline">
+                    View Full Profile →
+                  </button>
+                </div>
+
+                {selectedVideo.description && (
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground mr-1">{selectedVideo.full_name}</span>
+                    {selectedVideo.description}
+                  </p>
+                )}
+
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedVideo.position_tags.map((t) => (
+                    <Badge key={t} variant="outline" className="text-xs border-primary/30 text-primary rounded-full">{t}</Badge>
+                  ))}
+                  {selectedVideo.trait_tags.map((t) => (
+                    <Badge key={t} variant="outline" className="text-xs border-border text-muted-foreground rounded-full">{t}</Badge>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -29,6 +29,15 @@ const ScoutSelectPlayer = ({ playerId, playerName }: Props) => {
   const handleSubmit = async () => {
     if (!user) return;
     setSubmitting(true);
+
+    // Get scout's name
+    const { data: scoutProfile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const scoutName = scoutProfile?.full_name || "A scout";
+
     const { error } = await supabase.from("scout_requests").insert({
       scout_id: user.id,
       player_id: playerId,
@@ -38,6 +47,22 @@ const ScoutSelectPlayer = ({ playerId, playerName }: Props) => {
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
+      // Notify all admins about the new request
+      const { data: adminRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "admin" as any);
+
+      if (adminRoles && adminRoles.length > 0) {
+        const adminNotifs = adminRoles.map((a) => ({
+          user_id: a.user_id,
+          title: "🔔 New Scout Request",
+          message: `${scoutName} has requested details for player ${playerName}. Review it in the Requests tab.`,
+          type: "info",
+        }));
+        await supabase.from("notifications").insert(adminNotifs as any);
+      }
+
       toast({ title: "Request sent!", description: `Details for ${playerName} requested. Admin will review.` });
       setSubmitted(true);
       setOpen(false);
@@ -47,8 +72,8 @@ const ScoutSelectPlayer = ({ playerId, playerName }: Props) => {
 
   if (submitted) {
     return (
-      <Button size="sm" variant="outline" disabled className="border-primary/40 text-primary">
-        <UserPlus className="h-4 w-4 mr-1" /> Requested
+      <Button size="sm" variant="outline" disabled className="border-primary/40 text-primary rounded-full text-xs">
+        <UserPlus className="h-3 w-3 mr-1" /> Requested
       </Button>
     );
   }
@@ -56,8 +81,8 @@ const ScoutSelectPlayer = ({ playerId, playerName }: Props) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-          <UserPlus className="h-4 w-4 mr-1" /> Select Player
+        <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs">
+          <UserPlus className="h-3 w-3 mr-1" /> Select
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-card border-border">
