@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Users, Video, DollarSign, CheckCircle, XCircle, Clock, Loader2, Eye, AlertTriangle, MessageSquare, UserPlus, Send, User } from "lucide-react";
+import { Shield, Users, Video, DollarSign, CheckCircle, XCircle, Clock, Loader2, Eye, AlertTriangle, MessageSquare, UserPlus, Send, User, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,15 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [feedbackInputs, setFeedbackInputs] = useState<Record<string, string>>({});
+  // Search & filter states
+  const [scoutSearch, setScoutSearch] = useState("");
+  const [scoutFilter, setScoutFilter] = useState<string>("all");
+  const [videoSearch, setVideoSearch] = useState("");
+  const [videoFilter, setVideoFilter] = useState<string>("all");
+  const [requestSearch, setRequestSearch] = useState("");
+  const [requestFilter, setRequestFilter] = useState<string>("all");
+  const [messageSearch, setMessageSearch] = useState("");
+  const [messageFilter, setMessageFilter] = useState<string>("all");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -103,11 +112,28 @@ const AdminDashboard = () => {
     else { toast({ title: !currentlyFlagged ? "Message flagged" : "Flag removed" }); fetchAll(); }
   };
 
-  const handleScoutRequest = async (reqId: string, status: "approved" | "rejected", playerId: string, playerName: string, scoutName: string) => {
+  const handleScoutRequest = async (reqId: string, status: "approved" | "rejected", playerId: string, playerName: string, scoutName: string, scoutId: string) => {
     const { error } = await supabase.from("scout_requests").update({ status, admin_response: status === "approved" ? "Player details forwarded" : "Request denied" } as any).eq("id", reqId);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
 
-    // Send feedback notification to player
+    // Get full player details to forward to scout
+    if (status === "approved") {
+      const { data: playerProfile } = await supabase.from("profiles").select("*").eq("user_id", playerId).maybeSingle();
+      const playerDetails = playerProfile
+        ? `Name: ${playerProfile.full_name}\nPhone: ${playerProfile.phone || "N/A"}\nSport: ${playerProfile.sport || "N/A"}\nGender: ${playerProfile.gender || "N/A"}\nDOB: ${playerProfile.date_of_birth || "N/A"}\nGuardian: ${playerProfile.guardian_contact || "N/A"}\nBio: ${playerProfile.bio || "N/A"}`
+        : "Player details unavailable";
+
+      // Notify scout with player details
+      await supabase.from("notifications").insert({
+        user_id: scoutId,
+        title: `✅ Player Details: ${playerName}`,
+        message: playerDetails,
+        type: "selection",
+        metadata: { player_id: playerId, player_name: playerName, phone: playerProfile?.phone, sport: playerProfile?.sport, gender: playerProfile?.gender, dob: playerProfile?.date_of_birth, guardian: playerProfile?.guardian_contact, bio: playerProfile?.bio, avatar_url: playerProfile?.avatar_url },
+      } as any);
+    }
+
+    // Notify player
     const notifType = status === "approved" ? "selection" : "feedback";
     const notifTitle = status === "approved" ? "🎉 Congratulations! You've been selected!" : "📋 Scouting Feedback";
     const notifMessage = status === "approved"
@@ -116,7 +142,7 @@ const AdminDashboard = () => {
 
     await supabase.from("notifications").insert({ user_id: playerId, title: notifTitle, message: notifMessage, type: notifType } as any);
 
-    toast({ title: `Request ${status}. Player notified.` });
+    toast({ title: `Request ${status}. ${status === "approved" ? "Player details forwarded to scout." : "Player notified."}` });
     fetchAll();
   };
 
@@ -128,7 +154,50 @@ const AdminDashboard = () => {
     setFeedbackInputs((prev) => ({ ...prev, [playerId]: "" }));
   };
 
+  // Filtered data
+  const filteredScouts = scouts.filter((s) => {
+    const matchSearch = !scoutSearch || s.full_name?.toLowerCase().includes(scoutSearch.toLowerCase()) || s.organization?.toLowerCase().includes(scoutSearch.toLowerCase());
+    const matchFilter = scoutFilter === "all" || s.verification_status === scoutFilter;
+    return matchSearch && matchFilter;
+  });
+
+  const filteredVideos = videos.filter((v) => {
+    const matchSearch = !videoSearch || v.full_name?.toLowerCase().includes(videoSearch.toLowerCase()) || v.description?.toLowerCase().includes(videoSearch.toLowerCase());
+    const matchFilter = videoFilter === "all" || v.status === videoFilter;
+    return matchSearch && matchFilter;
+  });
+
+  const filteredRequests = scoutRequests.filter((r) => {
+    const matchSearch = !requestSearch || r.scout_name?.toLowerCase().includes(requestSearch.toLowerCase()) || r.player_name?.toLowerCase().includes(requestSearch.toLowerCase());
+    const matchFilter = requestFilter === "all" || r.status === requestFilter;
+    return matchSearch && matchFilter;
+  });
+
+  const filteredMessages = messages.filter((m) => {
+    const matchSearch = !messageSearch || m.sender_name?.toLowerCase().includes(messageSearch.toLowerCase()) || m.receiver_name?.toLowerCase().includes(messageSearch.toLowerCase()) || m.content.toLowerCase().includes(messageSearch.toLowerCase());
+    const matchFilter = messageFilter === "all" || (messageFilter === "flagged" && m.flagged) || (messageFilter === "clean" && !m.flagged);
+    return matchSearch && matchFilter;
+  });
+
   if (authLoading || loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+
+  const SearchFilterBar = ({ search, setSearch, filter, setFilter, filters, placeholder }: { search: string; setSearch: (v: string) => void; filter: string; setFilter: (v: string) => void; filters: { value: string; label: string }[]; placeholder: string }) => (
+    <div className="flex flex-col sm:flex-row gap-2 mb-4">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder={placeholder} className="pl-10 bg-secondary border-border rounded-xl text-sm" value={search} onChange={(e) => setSearch(e.target.value)} />
+      </div>
+      <div className="flex gap-1.5 flex-wrap">
+        {filters.map((f) => (
+          <Button key={f.value} size="sm" variant="outline"
+            onClick={() => setFilter(filter === f.value ? "all" : f.value)}
+            className={`text-xs rounded-full border-border ${filter === f.value ? "border-primary text-primary bg-primary/10" : "text-muted-foreground"}`}>
+            <Filter className="h-3 w-3 mr-1" /> {f.label}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen pt-20 pb-16">
@@ -140,7 +209,7 @@ const AdminDashboard = () => {
           </div>
 
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
               {[
                 { label: "Players", value: stats.totalPlayers, icon: Users },
                 { label: "Scouts", value: `${stats.activeScouts}/${stats.totalScouts}`, icon: Shield },
@@ -149,10 +218,10 @@ const AdminDashboard = () => {
                 { label: "Flagged", value: stats.flaggedMessages, icon: AlertTriangle },
                 { label: "Requests", value: stats.pendingRequests, icon: UserPlus },
               ].map((s) => (
-                <div key={s.label} className="bg-card border border-border rounded-xl p-4">
+                <div key={s.label} className="bg-card border border-border rounded-2xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <s.icon className="h-4 w-4 text-primary" />
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">{s.label}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{s.label}</span>
                   </div>
                   <p className="font-display text-3xl text-foreground">{s.value}</p>
                 </div>
@@ -172,14 +241,16 @@ const AdminDashboard = () => {
 
             {/* Scouts Tab */}
             <TabsContent value="scouts" className="space-y-3">
-              {scouts.length === 0 ? <p className="text-muted-foreground text-center py-12">No scout registrations yet.</p> : scouts.map((s) => (
-                <div key={s.id} className="bg-card border border-border rounded-xl p-4 flex items-center justify-between gap-4">
+              <SearchFilterBar search={scoutSearch} setSearch={setScoutSearch} filter={scoutFilter} setFilter={setScoutFilter} placeholder="Search scouts..."
+                filters={[{ value: "pending", label: "Pending" }, { value: "active", label: "Active" }, { value: "rejected", label: "Rejected" }]} />
+              {filteredScouts.length === 0 ? <p className="text-muted-foreground text-center py-12">No scouts found.</p> : filteredScouts.map((s) => (
+                <div key={s.id} className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground truncate">{s.full_name}</p>
                     <p className="text-xs text-muted-foreground">{s.organization || "No organization"} • {new Date(s.created_at).toLocaleDateString()}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Badge className={s.verification_status === "active" ? "bg-primary/20 text-primary border-primary/30" : s.verification_status === "pending" ? "bg-accent/20 text-accent-foreground border-accent/30" : "bg-destructive/20 text-destructive border-destructive/30"}>
+                    <Badge className={`rounded-full ${s.verification_status === "active" ? "bg-primary/20 text-primary border-primary/30" : s.verification_status === "pending" ? "bg-accent/20 text-accent-foreground border-accent/30" : "bg-destructive/20 text-destructive border-destructive/30"}`}>
                       {s.verification_status === "active" && <CheckCircle className="h-3 w-3 mr-1" />}
                       {s.verification_status === "pending" && <Clock className="h-3 w-3 mr-1" />}
                       {s.verification_status === "rejected" && <XCircle className="h-3 w-3 mr-1" />}
@@ -187,8 +258,8 @@ const AdminDashboard = () => {
                     </Badge>
                     {s.verification_status === "pending" && (
                       <>
-                        <Button size="sm" onClick={() => updateScoutStatus(s.id, "active")} className="bg-primary text-primary-foreground hover:bg-primary/90">Approve</Button>
-                        <Button size="sm" variant="outline" onClick={() => updateScoutStatus(s.id, "rejected")} className="border-destructive/40 text-destructive hover:bg-destructive/10">Reject</Button>
+                        <Button size="sm" onClick={() => updateScoutStatus(s.id, "active")} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs">Approve</Button>
+                        <Button size="sm" variant="outline" onClick={() => updateScoutStatus(s.id, "rejected")} className="border-destructive/40 text-destructive hover:bg-destructive/10 rounded-full text-xs">Reject</Button>
                       </>
                     )}
                   </div>
@@ -198,19 +269,21 @@ const AdminDashboard = () => {
 
             {/* Videos Tab */}
             <TabsContent value="videos" className="space-y-3">
-              {videos.length === 0 ? <p className="text-muted-foreground text-center py-12">No videos submitted yet.</p> : videos.map((v) => (
-                <div key={v.id} className="bg-card border border-border rounded-xl p-4 flex items-center justify-between gap-4">
+              <SearchFilterBar search={videoSearch} setSearch={setVideoSearch} filter={videoFilter} setFilter={setVideoFilter} placeholder="Search videos..."
+                filters={[{ value: "pending_payment", label: "Pending" }, { value: "live", label: "Live" }, { value: "rejected", label: "Rejected" }, { value: "draft", label: "Draft" }]} />
+              {filteredVideos.length === 0 ? <p className="text-muted-foreground text-center py-12">No videos found.</p> : filteredVideos.map((v) => (
+                <div key={v.id} className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground truncate">{v.full_name}</p>
                     <p className="text-xs text-muted-foreground truncate">{v.description || "No description"} • {new Date(v.created_at).toLocaleDateString()}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Badge className={v.status === "live" ? "bg-primary/20 text-primary border-primary/30" : v.status === "rejected" ? "bg-destructive/20 text-destructive border-destructive/30" : "bg-muted text-muted-foreground border-border"}>{v.status}</Badge>
+                    <Badge className={`rounded-full ${v.status === "live" ? "bg-primary/20 text-primary border-primary/30" : v.status === "rejected" ? "bg-destructive/20 text-destructive border-destructive/30" : "bg-muted text-muted-foreground border-border"}`}>{v.status}</Badge>
                     {v.video_url && <Button size="sm" variant="ghost" onClick={() => navigate(`/resume/${v.user_id}`)}><Eye className="h-4 w-4" /></Button>}
                     {(v.status === "pending_payment" || v.status === "draft") && (
                       <>
-                        <Button size="sm" onClick={() => updateVideoStatus(v.id, "live")} className="bg-primary text-primary-foreground hover:bg-primary/90">Approve</Button>
-                        <Button size="sm" variant="outline" onClick={() => updateVideoStatus(v.id, "rejected")} className="border-destructive/40 text-destructive hover:bg-destructive/10">Reject</Button>
+                        <Button size="sm" onClick={() => updateVideoStatus(v.id, "live")} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs">Approve</Button>
+                        <Button size="sm" variant="outline" onClick={() => updateVideoStatus(v.id, "rejected")} className="border-destructive/40 text-destructive hover:bg-destructive/10 rounded-full text-xs">Reject</Button>
                       </>
                     )}
                   </div>
@@ -220,27 +293,29 @@ const AdminDashboard = () => {
 
             {/* Scout Requests Tab */}
             <TabsContent value="requests" className="space-y-3">
-              {scoutRequests.length === 0 ? <p className="text-muted-foreground text-center py-12">No scout requests yet.</p> : scoutRequests.map((r) => (
-                <div key={r.id} className="bg-card border border-border rounded-xl p-4 space-y-3">
+              <SearchFilterBar search={requestSearch} setSearch={setRequestSearch} filter={requestFilter} setFilter={setRequestFilter} placeholder="Search requests..."
+                filters={[{ value: "pending", label: "Pending" }, { value: "approved", label: "Approved" }, { value: "rejected", label: "Rejected" }]} />
+              {filteredRequests.length === 0 ? <p className="text-muted-foreground text-center py-12">No requests found.</p> : filteredRequests.map((r) => (
+                <div key={r.id} className="bg-card border border-border rounded-2xl p-4 space-y-3">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-foreground">Scout: <span className="text-primary">{r.scout_name}</span> → Player: <span className="text-primary">{r.player_name}</span></p>
                       <p className="text-xs text-muted-foreground">{r.notes || "No notes"} • {new Date(r.created_at).toLocaleDateString()}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <Badge className={r.status === "approved" ? "bg-primary/20 text-primary border-primary/30" : r.status === "rejected" ? "bg-destructive/20 text-destructive border-destructive/30" : "bg-muted text-muted-foreground border-border"}>{r.status}</Badge>
+                      <Badge className={`rounded-full ${r.status === "approved" ? "bg-primary/20 text-primary border-primary/30" : r.status === "rejected" ? "bg-destructive/20 text-destructive border-destructive/30" : "bg-muted text-muted-foreground border-border"}`}>{r.status}</Badge>
                       {r.status === "pending" && (
                         <>
-                          <Button size="sm" onClick={() => handleScoutRequest(r.id, "approved", r.player_id, r.player_name || "", r.scout_name || "")} className="bg-primary text-primary-foreground hover:bg-primary/90">Approve</Button>
-                          <Button size="sm" variant="outline" onClick={() => handleScoutRequest(r.id, "rejected", r.player_id, r.player_name || "", r.scout_name || "")} className="border-destructive/40 text-destructive hover:bg-destructive/10">Reject</Button>
+                          <Button size="sm" onClick={() => handleScoutRequest(r.id, "approved", r.player_id, r.player_name || "", r.scout_name || "", r.scout_id)} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs">Approve & Forward</Button>
+                          <Button size="sm" variant="outline" onClick={() => handleScoutRequest(r.id, "rejected", r.player_id, r.player_name || "", r.scout_name || "", r.scout_id)} className="border-destructive/40 text-destructive hover:bg-destructive/10 rounded-full text-xs">Reject</Button>
                         </>
                       )}
                     </div>
                   </div>
                   {/* Personalized feedback */}
                   <div className="flex gap-2">
-                    <Input placeholder={`Send feedback to ${r.player_name}...`} className="bg-secondary border-border text-sm" value={feedbackInputs[r.player_id] || ""} onChange={(e) => setFeedbackInputs((prev) => ({ ...prev, [r.player_id]: e.target.value }))} />
-                    <Button size="sm" variant="outline" onClick={() => sendPersonalizedFeedback(r.player_id, r.player_name || "")} className="border-primary/40 text-primary shrink-0">
+                    <Input placeholder={`Send feedback to ${r.player_name}...`} className="bg-secondary border-border text-sm rounded-xl" value={feedbackInputs[r.player_id] || ""} onChange={(e) => setFeedbackInputs((prev) => ({ ...prev, [r.player_id]: e.target.value }))} />
+                    <Button size="sm" variant="outline" onClick={() => sendPersonalizedFeedback(r.player_id, r.player_name || "")} className="border-primary/40 text-primary shrink-0 rounded-full">
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>
@@ -250,14 +325,16 @@ const AdminDashboard = () => {
 
             {/* Safety Log */}
             <TabsContent value="safety" className="space-y-3">
-              <div className="bg-accent/10 border border-accent/30 rounded-xl p-4 mb-4">
+              <SearchFilterBar search={messageSearch} setSearch={setMessageSearch} filter={messageFilter} setFilter={setMessageFilter} placeholder="Search messages..."
+                filters={[{ value: "flagged", label: "Flagged" }, { value: "clean", label: "Clean" }]} />
+              <div className="bg-accent/10 border border-accent/30 rounded-2xl p-4 mb-4">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-accent" />
                   <p className="text-sm text-muted-foreground">All scout-player messages are logged here for safety monitoring.</p>
                 </div>
               </div>
-              {messages.length === 0 ? <p className="text-muted-foreground text-center py-12">No messages recorded yet.</p> : messages.map((m) => (
-                <div key={m.id} className={`bg-card border rounded-xl p-4 flex items-start justify-between gap-4 ${m.flagged ? "border-accent/50 bg-accent/5" : "border-border"}`}>
+              {filteredMessages.length === 0 ? <p className="text-muted-foreground text-center py-12">No messages found.</p> : filteredMessages.map((m) => (
+                <div key={m.id} className={`bg-card border rounded-2xl p-4 flex items-start justify-between gap-4 ${m.flagged ? "border-accent/50 bg-accent/5" : "border-border"}`}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <MessageSquare className="h-4 w-4 text-primary" />
@@ -272,7 +349,7 @@ const AdminDashboard = () => {
                     )}
                   </div>
                   <Button size="sm" variant="outline" onClick={() => toggleFlag(m.id, m.flagged)}
-                    className={m.flagged ? "border-primary/40 text-primary hover:bg-primary/10" : "border-accent/40 text-accent hover:bg-accent/10"}>
+                    className={`rounded-full text-xs ${m.flagged ? "border-primary/40 text-primary hover:bg-primary/10" : "border-accent/40 text-accent hover:bg-accent/10"}`}>
                     {m.flagged ? "Unflag" : "Flag"}
                   </Button>
                 </div>
