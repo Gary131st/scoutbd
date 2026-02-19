@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import PlayerDashboard from "./pages/PlayerDashboard";
@@ -30,13 +31,13 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/player" element={<PlayerDashboard />} />
-            <Route path="/scout" element={<ScoutDashboard />} />
+            <Route path="/player" element={<ProtectedRoute allowedRoles={["player"]}><PlayerDashboard /></ProtectedRoute>} />
+            <Route path="/scout" element={<ProtectedRoute allowedRoles={["scout"]}><ScoutDashboard /></ProtectedRoute>} />
             <Route path="/resume/:userId" element={<PlayerResume />} />
             <Route path="/safe-scouting" element={<SafeScouting />} />
             <Route path="/mission" element={<Mission />} />
             <Route path="/faq" element={<FAQ />} />
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Footer />

@@ -94,4 +94,20 @@
     backdrop-filter: blur(12px);
     border: 1px solid hsl(230 10% 22%);
   }
+
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .card-hover {
+    @apply transition-all duration-300;
+  }
+  .card-hover:hover {
+    border-color: hsl(120 100% 55% / 0.3);
+    box-shadow: 0 0 20px hsl(120 100% 55% / 0.08);
+  }
 }
