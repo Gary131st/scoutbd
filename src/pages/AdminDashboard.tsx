@@ -116,42 +116,75 @@ const AdminDashboard = () => {
     const { error } = await supabase.from("scout_requests").update({ status, admin_response: status === "approved" ? "Player details forwarded" : "Request denied" } as any).eq("id", reqId);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
 
-    // Get full player details to forward to scout
     if (status === "approved") {
+      // Get full player details to forward to scout
       const { data: playerProfile } = await supabase.from("profiles").select("*").eq("user_id", playerId).maybeSingle();
       const playerDetails = playerProfile
         ? `Name: ${playerProfile.full_name}\nPhone: ${playerProfile.phone || "N/A"}\nSport: ${playerProfile.sport || "N/A"}\nGender: ${playerProfile.gender || "N/A"}\nDOB: ${playerProfile.date_of_birth || "N/A"}\nGuardian: ${playerProfile.guardian_contact || "N/A"}\nBio: ${playerProfile.bio || "N/A"}`
         : "Player details unavailable";
 
-      // Notify scout with player details
+      // Notify SCOUT with full player details (scout-only, not visible to players)
       await supabase.from("notifications").insert({
         user_id: scoutId,
         title: `✅ Player Details: ${playerName}`,
         message: playerDetails,
         type: "selection",
-        metadata: { player_id: playerId, player_name: playerName, phone: playerProfile?.phone, sport: playerProfile?.sport, gender: playerProfile?.gender, dob: playerProfile?.date_of_birth, guardian: playerProfile?.guardian_contact, bio: playerProfile?.bio, avatar_url: playerProfile?.avatar_url },
+        metadata: {
+          player_id: playerId,
+          player_name: playerName,
+          phone: playerProfile?.phone,
+          sport: playerProfile?.sport,
+          gender: playerProfile?.gender,
+          dob: playerProfile?.date_of_birth,
+          guardian: playerProfile?.guardian_contact,
+          bio: playerProfile?.bio,
+          avatar_url: playerProfile?.avatar_url,
+        },
+      } as any);
+
+      // Notify PLAYER (congratulations only — no private details exposed)
+      await supabase.from("notifications").insert({
+        user_id: playerId,
+        title: "🎉 Congratulations! You've been selected!",
+        message: `A scout (${scoutName}) has shown interest in you! Your details have been shared. Keep up the great work!`,
+        type: "selection",
+      } as any);
+    } else {
+      // Rejected: only notify player — scouts see status change in their dashboard
+      await supabase.from("notifications").insert({
+        user_id: playerId,
+        title: "📋 Scouting Update",
+        message: `A scout reviewed your profile but decided not to proceed at this time. Keep improving and uploading new highlights!`,
+        type: "feedback",
       } as any);
     }
 
-    // Notify player
-    const notifType = status === "approved" ? "selection" : "feedback";
-    const notifTitle = status === "approved" ? "🎉 Congratulations! You've been selected!" : "📋 Scouting Feedback";
-    const notifMessage = status === "approved"
-      ? `A scout (${scoutName}) has shown interest in you! Your details have been shared. Keep up the great work!`
-      : `A scout reviewed your profile but decided not to proceed at this time. Keep improving and uploading new highlights!`;
-
-    await supabase.from("notifications").insert({ user_id: playerId, title: notifTitle, message: notifMessage, type: notifType } as any);
-
-    toast({ title: `Request ${status}. ${status === "approved" ? "Player details forwarded to scout." : "Player notified."}` });
+    toast({ title: `Request ${status}.`, description: status === "approved" ? "Player details forwarded to scout. Player notified." : "Player notified." });
     fetchAll();
   };
 
-  const sendPersonalizedFeedback = async (playerId: string, playerName: string) => {
-    const feedback = feedbackInputs[playerId];
+  const sendPersonalizedFeedback = async (reqId: string, scoutId: string, scoutName: string, playerId: string, playerName: string) => {
+    const feedback = feedbackInputs[reqId];
     if (!feedback?.trim()) return;
-    await supabase.from("notifications").insert({ user_id: playerId, title: "📝 Personalized Feedback from Admin", message: feedback, type: "feedback" } as any);
-    toast({ title: `Feedback sent to ${playerName}` });
-    setFeedbackInputs((prev) => ({ ...prev, [playerId]: "" }));
+
+    // Send feedback to PLAYER
+    await supabase.from("notifications").insert({
+      user_id: playerId,
+      title: "📝 Personalized Feedback from Admin",
+      message: feedback,
+      type: "feedback",
+    } as any);
+
+    // Also send feedback context to SCOUT so they know admin responded
+    await supabase.from("notifications").insert({
+      user_id: scoutId,
+      title: `📋 Admin Note on ${playerName}`,
+      message: `Admin feedback regarding your request for ${playerName}: "${feedback}"`,
+      type: "feedback",
+    } as any);
+
+    toast({ title: `Feedback sent to ${playerName} and noted to ${scoutName}` });
+    setFeedbackInputs((prev) => ({ ...prev, [reqId]: "" }));
   };
 
   // Filtered data
@@ -312,10 +345,10 @@ const AdminDashboard = () => {
                       )}
                     </div>
                   </div>
-                  {/* Personalized feedback */}
+                  {/* Personalized feedback — sent to player, also noted to scout */}
                   <div className="flex gap-2">
-                    <Input placeholder={`Send feedback to ${r.player_name}...`} className="bg-secondary border-border text-sm rounded-xl" value={feedbackInputs[r.player_id] || ""} onChange={(e) => setFeedbackInputs((prev) => ({ ...prev, [r.player_id]: e.target.value }))} />
-                    <Button size="sm" variant="outline" onClick={() => sendPersonalizedFeedback(r.player_id, r.player_name || "")} className="border-primary/40 text-primary shrink-0 rounded-full">
+                    <Input placeholder={`Send feedback to ${r.player_name}...`} className="bg-secondary border-border text-sm rounded-xl" value={feedbackInputs[r.id] || ""} onChange={(e) => setFeedbackInputs((prev) => ({ ...prev, [r.id]: e.target.value }))} />
+                    <Button size="sm" variant="outline" onClick={() => sendPersonalizedFeedback(r.id, r.scout_id, r.scout_name || "", r.player_id, r.player_name || "")} className="border-primary/40 text-primary shrink-0 rounded-full">
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>

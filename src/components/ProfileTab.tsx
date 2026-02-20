@@ -69,20 +69,38 @@ const ProfileTab = () => {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({
-      full_name: profile.full_name, username: profile.username, bio: profile.bio,
-      phone: profile.phone, avatar_url: profile.avatar_url, sport: profile.sport,
-      gender: profile.gender, date_of_birth: profile.date_of_birth || null,
-      guardian_contact: profile.guardian_contact,
-    } as any).eq("user_id", user.id);
+    try {
+      // Build update object carefully — only include fields that exist in the schema
+      const updateData: Record<string, any> = {
+        full_name: profile.full_name || "",
+        bio: profile.bio || null,
+        phone: profile.phone || null,
+        avatar_url: profile.avatar_url || null,
+        sport: profile.sport || null,
+        gender: profile.gender || null,
+        date_of_birth: profile.date_of_birth || null,
+        guardian_contact: profile.guardian_contact || null,
+      };
+      // Only add username if it's non-empty to avoid unique constraint on empty string
+      if (profile.username?.trim()) {
+        updateData.username = profile.username.trim();
+      }
 
-    if (error) {
-      toast({ title: "Save failed", description: error.message.includes("unique") ? "Username already taken" : error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Profile saved!" });
-      setEditing(false);
+      const { error } = await supabase.from("profiles").update(updateData as any).eq("user_id", user.id);
+      if (error) {
+        const msg = error.message.includes("unique") || error.message.includes("duplicate")
+          ? "Username already taken. Please choose a different one."
+          : error.message;
+        toast({ title: "Save failed", description: msg, variant: "destructive" });
+      } else {
+        toast({ title: "Profile saved! ✅" });
+        setEditing(false);
+      }
+    } catch (err: any) {
+      toast({ title: "Unexpected error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
