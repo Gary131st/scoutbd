@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { Zap, Upload, Eye, EyeOff, Loader2, Mail, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Zap, Upload, Eye, EyeOff, Loader2, Mail, ArrowLeft, ShieldCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 type Role = "player" | "scout";
 type Sport = "football" | "cricket";
 type Step = "form" | "otp";
+
+const RESEND_COOLDOWN = 60;
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -27,6 +29,9 @@ const Auth = () => {
   const [step, setStep] = useState<Step>("form");
   const [otp, setOtp] = useState("");
   const [verifying, setVerifying] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const [resending, setResending] = useState(false);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
   // Store form values that persist across steps
   const [formEmail, setFormEmail] = useState("");
   const [formName, setFormName] = useState("");
@@ -42,6 +47,20 @@ const Auth = () => {
     }
   }, [user, userRole, navigate]);
 
+  useEffect(() => {
+    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
+  }, []);
+
+  const startCountdown = () => {
+    setResendCountdown(RESEND_COOLDOWN);
+    countdownRef.current = setInterval(() => {
+      setResendCountdown((prev) => {
+        if (prev <= 1) { clearInterval(countdownRef.current!); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -51,24 +70,36 @@ const Auth = () => {
         if (error) throw error;
         toast({ title: "Welcome back!", description: "You've been signed in." });
       } else {
-        // Use signUp with emailRedirectTo set to a non-existent path so Supabase
-        // sends OTP code instead of a magic link
         const { error } = await supabase.auth.signUp({
           email: formEmail,
           password: formPassword,
-          options: {
-            data: { full_name: formName },
-            emailRedirectTo: undefined, // Don't set redirect so OTP is used
-          },
+          options: { data: { full_name: formName } },
         });
         if (error) throw error;
-        toast({ title: "OTP Sent! 📧", description: `Check your email for a 6-digit code from Scout BD.` });
+        toast({ title: "OTP Sent! 📧", description: `Check your email for a 6-digit code.` });
         setStep("otp");
+        startCountdown();
       }
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Something went wrong", variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (resendCountdown > 0 || resending) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email: formEmail });
+      if (error) throw error;
+      toast({ title: "OTP Resent! 📧", description: "A new 6-digit code has been sent to your email." });
+      startCountdown();
+      setOtp("");
+    } catch (err: any) {
+      toast({ title: "Resend failed", description: err.message, variant: "destructive" });
+    } finally {
+      setResending(false);
     }
   };
 
@@ -100,6 +131,8 @@ const Auth = () => {
   const handleGoBack = () => {
     setStep("form");
     setOtp("");
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    setResendCountdown(0);
     // DO NOT reset form values — keeps form filled when going back
   };
 
@@ -166,14 +199,14 @@ const Auth = () => {
 
               <div className="text-center space-y-1">
                 <p className="text-sm font-medium text-foreground">Check your inbox</p>
-                <p className="text-xs text-muted-foreground">A 6-digit OTP code was sent by Scout BD</p>
+                <p className="text-xs text-muted-foreground">A 6-digit OTP code was sent to <span className="text-primary">{formEmail}</span></p>
               </div>
 
               <div className="flex justify-center">
                 <InputOTP maxLength={6} value={otp} onChange={setOtp}>
                   <InputOTPGroup>
                     {[0,1,2,3,4,5].map(i => (
-                      <InputOTPSlot key={i} index={i} className="w-12 h-14 text-lg font-display bg-secondary border-border" />
+                      <InputOTPSlot key={i} index={i} className="w-10 h-12 text-base font-display bg-secondary border-border" />
                     ))}
                   </InputOTPGroup>
                 </InputOTP>
@@ -187,6 +220,22 @@ const Auth = () => {
                 {verifying ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
                 Verify & Create Account
               </Button>
+
+              {/* Resend OTP */}
+              <div className="text-center">
+                {resendCountdown > 0 ? (
+                  <p className="text-xs text-muted-foreground">Resend available in <span className="text-primary font-semibold">{resendCountdown}s</span></p>
+                ) : (
+                  <button
+                    onClick={handleResendOtp}
+                    disabled={resending}
+                    className="text-xs text-primary hover:underline flex items-center gap-1 mx-auto transition-colors disabled:opacity-50"
+                  >
+                    {resending ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                    Resend OTP
+                  </button>
+                )}
+              </div>
 
               <button
                 onClick={handleGoBack}

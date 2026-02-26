@@ -61,17 +61,23 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border box-border;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
   }
 
   h1, h2, h3 {
     font-family: 'Bebas Neue', sans-serif;
     letter-spacing: 0.02em;
+  }
+
+  /* Ensure inputs are full-width by default */
+  input, select, textarea {
+    max-width: 100%;
   }
 }
 
@@ -109,5 +115,34 @@
   .card-hover:hover {
     border-color: hsl(120 100% 55% / 0.3);
     box-shadow: 0 0 20px hsl(120 100% 55% / 0.08);
+  }
+
+  /* Chat bubbles */
+  .chat-bubble-own {
+    border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
+  }
+  .chat-bubble-other {
+    border-radius: 1.25rem 1.25rem 1.25rem 0.25rem;
+  }
+
+  /* Mobile safe container */
+  .container {
+    @apply px-4 sm:px-6 lg:px-8 mx-auto;
+    max-width: 1280px;
+  }
+
+  /* Prevent text overflow on mobile */
+  .truncate-mobile {
+    @apply truncate max-w-[200px] sm:max-w-none;
+  }
+
+  /* OTP input fixes on mobile */
+  .otp-container {
+    @apply flex gap-2 justify-center flex-wrap;
+  }
+
+  /* Page transition wrapper */
+  .page-wrapper {
+    @apply min-h-screen w-full overflow-x-hidden;
   }
 }

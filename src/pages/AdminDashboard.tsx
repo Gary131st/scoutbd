@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Shield, Users, Video, DollarSign, CheckCircle, XCircle, Clock, Loader2, Eye, AlertTriangle, MessageSquare, UserPlus, Send, User, Search, Filter } from "lucide-react";
+import ChatInterface from "@/components/ChatInterface";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -357,36 +358,14 @@ const AdminDashboard = () => {
             </TabsContent>
 
             {/* Safety Log */}
-            <TabsContent value="safety" className="space-y-3">
-              <SearchFilterBar search={messageSearch} setSearch={setMessageSearch} filter={messageFilter} setFilter={setMessageFilter} placeholder="Search messages..."
-                filters={[{ value: "flagged", label: "Flagged" }, { value: "clean", label: "Clean" }]} />
-              <div className="bg-accent/10 border border-accent/30 rounded-2xl p-4 mb-4">
+            <TabsContent value="safety" className="space-y-4">
+              <div className="bg-accent/10 border border-accent/30 rounded-2xl p-4">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-accent" />
-                  <p className="text-sm text-muted-foreground">All scout-player messages are logged here for safety monitoring.</p>
+                  <p className="text-sm text-muted-foreground">All scout-player messages are logged here for safety monitoring. Use the chat view below to inspect and flag conversations.</p>
                 </div>
               </div>
-              {filteredMessages.length === 0 ? <p className="text-muted-foreground text-center py-12">No messages found.</p> : filteredMessages.map((m) => (
-                <div key={m.id} className={`bg-card border rounded-2xl p-4 flex items-start justify-between gap-4 ${m.flagged ? "border-accent/50 bg-accent/5" : "border-border"}`}>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <MessageSquare className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-semibold text-foreground">{m.sender_name}</span>
-                      <span className="text-xs text-muted-foreground">→</span>
-                      <span className="text-sm font-semibold text-foreground">{m.receiver_name}</span>
-                      <span className="text-xs text-muted-foreground ml-auto">{new Date(m.created_at).toLocaleString()}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{m.content}</p>
-                    {m.flagged && m.flag_reason && (
-                      <div className="flex items-center gap-1 mt-2"><AlertTriangle className="h-3 w-3 text-accent" /><span className="text-xs text-accent">{m.flag_reason}</span></div>
-                    )}
-                  </div>
-                  <Button size="sm" variant="outline" onClick={() => toggleFlag(m.id, m.flagged)}
-                    className={`rounded-full text-xs ${m.flagged ? "border-primary/40 text-primary hover:bg-primary/10" : "border-accent/40 text-accent hover:bg-accent/10"}`}>
-                    {m.flagged ? "Unflag" : "Flag"}
-                  </Button>
-                </div>
-              ))}
+              <ChatInterface adminView={true} />
             </TabsContent>
 
             {/* Notices Tab */}

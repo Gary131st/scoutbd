@@ -26,21 +26,21 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass">
-      <div className="container flex items-center justify-between h-16">
-        <Link to="/" className="flex items-center gap-2">
+      <div className="container flex items-center justify-between h-16 gap-4">
+        <Link to="/" className="flex items-center gap-2 shrink-0">
           <Zap className="h-6 w-6 text-primary" />
-          <span className="font-display text-2xl tracking-wider text-foreground">
+          <span className="font-display text-xl sm:text-2xl tracking-wider text-foreground">
             SCOUT <span className="text-primary">BD</span>
           </span>
         </Link>
 
         {/* Desktop */}
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden md:flex items-center gap-4 lg:gap-6 overflow-hidden">
           {navLinks.map((l) => (
             <Link
               key={l.path}
               to={l.path}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
+              className={`text-sm font-medium transition-colors hover:text-primary whitespace-nowrap ${
                 location.pathname === l.path ? "text-primary" : "text-muted-foreground"
               }`}
             >
@@ -48,10 +48,10 @@ const Navbar = () => {
             </Link>
           ))}
           {user ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
               <NotificationBell />
               <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"}>
-                <Button size="sm" variant="outline" className="border-primary/40 text-primary hover:bg-primary/10">
+                <Button size="sm" variant="outline" className="border-primary/40 text-primary hover:bg-primary/10 whitespace-nowrap">
                   Dashboard
                 </Button>
               </Link>
@@ -60,7 +60,7 @@ const Navbar = () => {
               </Button>
             </div>
           ) : (
-            <Link to="/auth">
+            <Link to="/auth" className="shrink-0">
               <Button size="sm" className="bg-primary text-primary-foreground font-semibold hover:bg-primary/90">
                 Get Started
               </Button>
@@ -69,7 +69,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile toggle */}
-        <button className="md:hidden text-foreground" onClick={() => setOpen(!open)}>
+        <button className="md:hidden text-foreground shrink-0 p-1" onClick={() => setOpen(!open)}>
           {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>

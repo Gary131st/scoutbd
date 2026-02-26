@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Filter, Play, ShieldCheck, ShieldAlert, Loader2, User, ClipboardList, Eye, Phone, Calendar, MapPin, X } from "lucide-react";
+import { Search, Filter, Play, ShieldCheck, ShieldAlert, Loader2, User, ClipboardList, Eye, Phone, Calendar, MessageSquare, X } from "lucide-react";
+import ChatInterface from "@/components/ChatInterface";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -132,12 +133,15 @@ const ScoutDashboard = () => {
           )}
 
           <Tabs defaultValue="talent" className="space-y-6">
-            <TabsList className="bg-card border border-border">
+            <TabsList className="bg-card border border-border flex-wrap">
               <TabsTrigger value="talent" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Search className="h-4 w-4 mr-1.5" /> Talent Database
               </TabsTrigger>
               <TabsTrigger value="requests" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <ClipboardList className="h-4 w-4 mr-1.5" /> My Selections ({requests.length})
+              </TabsTrigger>
+              <TabsTrigger value="messages" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <MessageSquare className="h-4 w-4 mr-1.5" /> Messages
               </TabsTrigger>
               <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <User className="h-4 w-4 mr-1.5" /> My Profile
@@ -329,6 +333,15 @@ const ScoutDashboard = () => {
                   </motion.div>
                 ))
               )}
+            </TabsContent>
+
+            <TabsContent value="messages">
+              <div className="space-y-4">
+                <div className="bg-card/50 border border-border rounded-2xl p-4">
+                  <p className="text-xs text-muted-foreground">💬 Use this to communicate with other users. All messages are moderated for safety.</p>
+                </div>
+                <ChatInterface />
+              </div>
             </TabsContent>
 
             <TabsContent value="profile">
