@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, CheckCheck, Check, AlertTriangle, Search, Filter, MessageSquare, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ interface Props {
   peerName?: string;
 }
 
-const ChatInterface = ({ adminView = false, peerId, peerName }: Props) => {
+const ChatInterface = React.forwardRef<HTMLDivElement, Props>(({ adminView = false, peerId, peerName }, _ref) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -319,6 +320,8 @@ const ChatInterface = ({ adminView = false, peerId, peerName }: Props) => {
       )}
     </div>
   );
-};
+});
+
+ChatInterface.displayName = "ChatInterface";
 
 export default ChatInterface;
