@@ -37,7 +37,7 @@ const NotificationBell = () => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
-  const bellRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const fetchNotifications = async () => {
     if (!user) return;
@@ -47,7 +47,7 @@ const NotificationBell = () => {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(30);
-    if (!error) setNotifications((data as Notification[]) || []);
+    if (!error && data) setNotifications(data as Notification[]);
   };
 
   useEffect(() => {
@@ -56,31 +56,37 @@ const NotificationBell = () => {
 
     const channel = supabase
       .channel(`notifications-${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          setNotifications((prev) => [payload.new as Notification, ...prev]);
-        }
-      )
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "notifications",
+        filter: `user_id=eq.${user.id}`,
+      }, (payload) => {
+        setNotifications((prev) => [payload.new as Notification, ...prev]);
+      })
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "notifications",
+        filter: `user_id=eq.${user.id}`,
+      }, (payload) => {
+        setNotifications((prev) => prev.map((n) => n.id === payload.new.id ? payload.new as Notification : n));
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user]);
+  }, [user?.id]);
 
   // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
-    if (open) document.addEventListener("mousedown", handler);
+    if (open) {
+      document.addEventListener("mousedown", handler);
+    }
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
@@ -102,103 +108,87 @@ const NotificationBell = () => {
   if (!user) return null;
 
   return (
-    <div ref={bellRef} className="relative">
-      <motion.button
-        onClick={() => setOpen(!open)}
-        whileTap={{ scale: 0.9 }}
+    <div ref={containerRef} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
         className="relative p-2 rounded-lg hover:bg-secondary transition-colors"
         aria-label="Notifications"
       >
         <Bell className="h-5 w-5 text-muted-foreground" />
-        <AnimatePresence>
-          {unreadCount > 0 && (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center px-1"
-            >
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </motion.button>
+        {unreadCount > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center px-1 pointer-events-none">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
+      </button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.97 }}
-            transition={{ duration: 0.18 }}
-            className="absolute right-0 top-12 w-80 sm:w-96 bg-card border border-border rounded-2xl shadow-2xl z-50 max-h-[75vh] overflow-hidden flex flex-col"
-            style={{ transformOrigin: "top right" }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-              <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-primary" />
-                <h3 className="font-display text-base text-foreground">NOTIFICATIONS</h3>
-                {unreadCount > 0 && (
-                  <span className="text-xs bg-primary/20 text-primary rounded-full px-2 py-0.5 font-semibold">
-                    {unreadCount} new
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-1">
-                {unreadCount > 0 && (
-                  <Button size="sm" variant="ghost" onClick={markAllRead} className="text-xs text-primary h-7 px-2 gap-1">
-                    <CheckCheck className="h-3 w-3" /> All read
-                  </Button>
-                )}
-                <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-secondary transition-colors">
-                  <X className="h-4 w-4 text-muted-foreground" />
-                </button>
-              </div>
-            </div>
-
-            {/* List */}
-            <div className="overflow-y-auto flex-1 divide-y divide-border">
-              {notifications.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-3">
-                  <Bell className="h-8 w-8 text-muted-foreground/40" />
-                  <p className="text-sm text-muted-foreground">No notifications yet</p>
-                </div>
-              ) : (
-                notifications.map((n) => {
-                  const Icon = typeIcons[n.type] || Info;
-                  const iconColor = typeColors[n.type] || "text-muted-foreground";
-                  return (
-                    <motion.div
-                      key={n.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      onClick={() => !n.read && markRead(n.id)}
-                      className={`p-4 hover:bg-secondary/50 cursor-pointer transition-colors ${!n.read ? "bg-primary/5" : ""}`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${!n.read ? "bg-primary/15" : "bg-secondary"}`}>
-                          <Icon className={`h-4 w-4 ${!n.read ? iconColor : "text-muted-foreground"}`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium leading-tight ${!n.read ? "text-foreground" : "text-muted-foreground"}`}>
-                            {n.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">{n.message}</p>
-                          <p className="text-[10px] text-muted-foreground/60 mt-1">
-                            {new Date(n.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                        {!n.read && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-2" />}
-                      </div>
-                    </motion.div>
-                  );
-                })
+      {open && (
+        <div
+          className="absolute right-0 top-12 w-80 sm:w-96 bg-card border border-border rounded-2xl shadow-2xl z-[100] max-h-[75vh] overflow-hidden flex flex-col"
+          style={{ transformOrigin: "top right" }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-primary" />
+              <h3 className="font-display text-base text-foreground">NOTIFICATIONS</h3>
+              {unreadCount > 0 && (
+                <span className="text-xs bg-primary/20 text-primary rounded-full px-2 py-0.5 font-semibold">
+                  {unreadCount} new
+                </span>
               )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div className="flex items-center gap-1">
+              {unreadCount > 0 && (
+                <Button size="sm" variant="ghost" onClick={markAllRead} className="text-xs text-primary h-7 px-2 gap-1">
+                  <CheckCheck className="h-3 w-3" /> All read
+                </Button>
+              )}
+              <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-secondary transition-colors">
+                <X className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+
+          {/* List */}
+          <div className="overflow-y-auto flex-1 divide-y divide-border">
+            {notifications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <Bell className="h-8 w-8 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">No notifications yet</p>
+              </div>
+            ) : (
+              notifications.map((n) => {
+                const Icon = typeIcons[n.type] || Info;
+                const iconColor = typeColors[n.type] || "text-muted-foreground";
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => !n.read && markRead(n.id)}
+                    className={`p-4 hover:bg-secondary/50 cursor-pointer transition-colors ${!n.read ? "bg-primary/5" : ""}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${!n.read ? "bg-primary/15" : "bg-secondary"}`}>
+                        <Icon className={`h-4 w-4 ${!n.read ? iconColor : "text-muted-foreground"}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium leading-tight ${!n.read ? "text-foreground" : "text-muted-foreground"}`}>
+                          {n.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">{n.message}</p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">
+                          {new Date(n.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      {!n.read && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-2" />}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
