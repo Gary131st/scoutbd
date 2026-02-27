@@ -61,17 +61,19 @@ const ScoutDashboard = () => {
       const userIds = [...new Set([...videos.map((v) => v.user_id), ...reqs.map((r) => r.player_id)])];
       let profileMap = new Map<string, { full_name: string; sport: string; avatar_url: string }>();
       if (userIds.length > 0) {
-        const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, sport, avatar_url").in("user_id", userIds);
+        const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, sport, avatar_url, bio, gender").in("user_id", userIds);
         (profiles || []).forEach((p) => profileMap.set(p.user_id, { full_name: p.full_name, sport: p.sport || "football", avatar_url: p.avatar_url || "" }));
       }
 
-      setPlayers(videos.map((v) => ({
-        id: v.id, user_id: v.user_id, video_url: v.video_url,
-        position_tags: v.position_tags || [], trait_tags: v.trait_tags || [],
-        full_name: profileMap.get(v.user_id)?.full_name || "Unknown",
-        sport: profileMap.get(v.user_id)?.sport || "football",
-        avatar_url: profileMap.get(v.user_id)?.avatar_url || "",
-      })));
+      setPlayers(videos
+        .filter((v) => profileMap.has(v.user_id)) // only include players with known profiles
+        .map((v) => ({
+          id: v.id, user_id: v.user_id, video_url: v.video_url,
+          position_tags: v.position_tags || [], trait_tags: v.trait_tags || [],
+          full_name: profileMap.get(v.user_id)?.full_name || "",
+          sport: profileMap.get(v.user_id)?.sport || "football",
+          avatar_url: profileMap.get(v.user_id)?.avatar_url || "",
+        })));
 
       // For approved requests, fetch player details from notifications metadata
       const approvedReqs = reqs.filter((r) => r.status === "approved");
@@ -102,9 +104,10 @@ const ScoutDashboard = () => {
   }, [user, authLoading]);
 
   const filtered = players.filter((p) => {
+    // Don't show unknown players — require a real name
     const matchSearch = !search || p.full_name.toLowerCase().includes(search.toLowerCase()) || p.position_tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
     const matchSport = !sportFilter || p.sport === sportFilter;
-    return matchSearch && matchSport;
+    return matchSearch && matchSport && p.full_name && p.full_name !== "Unknown";
   });
 
   if (authLoading || loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
