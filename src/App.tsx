@@ -22,16 +22,30 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const pageVariants = {
-  initial: { opacity: 0, y: 16, scale: 0.99 },
-  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.35 } },
-  exit: { opacity: 0, y: -10, scale: 0.99, transition: { duration: 0.25 } },
+  initial: { opacity: 0, y: 20, scale: 0.985 },
+  animate: { 
+    opacity: 1, y: 0, scale: 1, 
+    transition: { duration: 0.45, ease: "easeOut" as const } 
+  },
+  exit: { 
+    opacity: 0, y: -12, scale: 0.985, 
+    transition: { duration: 0.28, ease: "easeIn" as const } 
+  },
 };
 
 const AnimatedRoutes = () => {
   const location = useLocation();
   return (
     <AnimatePresence mode="wait">
-      <motion.div key={location.pathname} variants={pageVariants} initial="initial" animate="animate" exit="exit">
+      <motion.div
+        key={location.pathname}
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        style={{ transformStyle: "preserve-3d", willChange: "transform, opacity" }}
+        className="w-full"
+      >
         <Routes location={location}>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />

@@ -32,14 +32,15 @@ const Auth = () => {
   const [resendCountdown, setResendCountdown] = useState(0);
   const [resending, setResending] = useState(false);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
-  // Store form values that persist across steps
+
+  // Stable form state — never wiped on step changes
   const [formEmail, setFormEmail] = useState("");
   const [formName, setFormName] = useState("");
   const [formPhone, setFormPhone] = useState("");
   const [formGender, setFormGender] = useState("");
   const [formPassword, setFormPassword] = useState("");
 
-  // Redirect logged-in users to their dashboard
+  // Redirect logged-in users
   useEffect(() => {
     if (user && userRole) {
       const dest = userRole === "admin" ? "/admin" : userRole === "scout" ? "/scout" : "/player";
@@ -52,6 +53,7 @@ const Auth = () => {
   }, []);
 
   const startCountdown = () => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
     setResendCountdown(RESEND_COOLDOWN);
     countdownRef.current = setInterval(() => {
       setResendCountdown((prev) => {
@@ -70,13 +72,24 @@ const Auth = () => {
         if (error) throw error;
         toast({ title: "Welcome back!", description: "You've been signed in." });
       } else {
-        const { error } = await supabase.auth.signUp({
+        // Try signUp — if user already exists (unconfirmed), resend OTP instead
+        const { data, error } = await supabase.auth.signUp({
           email: formEmail,
           password: formPassword,
           options: { data: { full_name: formName } },
         });
-        if (error) throw error;
-        toast({ title: "OTP Sent! 📧", description: `Check your email for a 6-digit code.` });
+
+        if (error) {
+          // If user already registered but unconfirmed, resend OTP
+          if (error.message.toLowerCase().includes("already registered") || error.message.toLowerCase().includes("already exists")) {
+            const { error: resendErr } = await supabase.auth.resend({ type: "signup", email: formEmail });
+            if (resendErr) throw resendErr;
+          } else {
+            throw error;
+          }
+        }
+
+        toast({ title: "OTP Sent! 📧", description: "Check your email for a 6-digit code." });
         setStep("otp");
         startCountdown();
       }
@@ -93,7 +106,7 @@ const Auth = () => {
     try {
       const { error } = await supabase.auth.resend({ type: "signup", email: formEmail });
       if (error) throw error;
-      toast({ title: "OTP Resent! 📧", description: "A new 6-digit code has been sent to your email." });
+      toast({ title: "OTP Resent! 📧", description: "A new 6-digit code has been sent." });
       startCountdown();
       setOtp("");
     } catch (err: any) {
@@ -128,18 +141,17 @@ const Auth = () => {
     }
   };
 
+  // Go back WITHOUT resetting any form values
   const handleGoBack = () => {
-    setStep("form");
-    setOtp("");
     if (countdownRef.current) clearInterval(countdownRef.current);
     setResendCountdown(0);
-    // DO NOT reset form values — keeps form filled when going back
+    setOtp("");
+    setStep("form");
   };
 
   const containerVariants = {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, staggerChildren: 0.08 } },
-    exit: { opacity: 0, y: -20, transition: { duration: 0.3 } },
   };
   const itemVariants = {
     hidden: { opacity: 0, y: 12 },
@@ -147,14 +159,14 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center pt-20 pb-10 px-4 perspective-1000">
+    <div className="min-h-screen flex items-center justify-center pt-24 pb-12 px-4" style={{ perspective: "1200px" }}>
       <motion.div
         initial="hidden"
         animate="visible"
         variants={containerVariants}
-        style={{ transformStyle: "preserve-3d" }}
         className="w-full max-w-md"
       >
+        {/* Header */}
         <motion.div variants={itemVariants} className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-4 group">
             <motion.div whileHover={{ rotate: 15, scale: 1.2 }} transition={{ type: "spring", stiffness: 300 }}>
@@ -162,35 +174,41 @@ const Auth = () => {
             </motion.div>
             <span className="font-display text-2xl text-foreground">SCOUT BD</span>
           </Link>
-          <h1 className="font-display text-3xl text-foreground">
-            {step === "otp" ? "VERIFY EMAIL" : isLogin ? "WELCOME BACK" : "JOIN THE GAME"}
-          </h1>
-          {step === "otp" && (
-            <motion.p
-              initial={{ opacity: 0, y: 8 }}
+          <AnimatePresence mode="wait">
+            <motion.h1
+              key={step === "otp" ? "otp-title" : isLogin ? "login-title" : "signup-title"}
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-sm text-muted-foreground mt-2"
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.25 }}
+              className="font-display text-3xl text-foreground"
             >
-              Enter the 6-digit code sent to <span className="text-primary font-medium">{formEmail}</span>
+              {step === "otp" ? "VERIFY EMAIL" : isLogin ? "WELCOME BACK" : "JOIN THE GAME"}
+            </motion.h1>
+          </AnimatePresence>
+          {step === "otp" && (
+            <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-sm text-muted-foreground mt-2">
+              Code sent to <span className="text-primary font-medium">{formEmail}</span>
             </motion.p>
           )}
         </motion.div>
 
-        <AnimatePresence mode="wait">
+        {/* Cards */}
+        <AnimatePresence mode="wait" initial={false}>
           {step === "otp" ? (
             <motion.div
-              key="otp"
-              initial={{ opacity: 0, x: 60, rotateY: 15 }}
+              key="otp-card"
+              initial={{ opacity: 0, x: 60, rotateY: 12 }}
               animate={{ opacity: 1, x: 0, rotateY: 0 }}
-              exit={{ opacity: 0, x: -60, rotateY: -15 }}
+              exit={{ opacity: 0, x: -60, rotateY: -12 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
               style={{ transformStyle: "preserve-3d" }}
               className="bg-card border border-border rounded-2xl p-8 space-y-6 shadow-2xl"
             >
               <div className="flex justify-center">
                 <motion.div
-                  animate={{ scale: [1, 1.05, 1], rotateY: [0, 5, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                   className="w-20 h-20 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center"
                 >
                   <Mail className="h-10 w-10 text-primary" />
@@ -198,14 +216,14 @@ const Auth = () => {
               </div>
 
               <div className="text-center space-y-1">
-                <p className="text-sm font-medium text-foreground">Check your inbox</p>
-                <p className="text-xs text-muted-foreground">A 6-digit OTP code was sent to <span className="text-primary">{formEmail}</span></p>
+                <p className="text-sm font-medium text-foreground">Enter the 6-digit code</p>
+                <p className="text-xs text-muted-foreground">Sent to <span className="text-primary">{formEmail}</span></p>
               </div>
 
               <div className="flex justify-center">
                 <InputOTP maxLength={6} value={otp} onChange={setOtp}>
                   <InputOTPGroup>
-                    {[0,1,2,3,4,5].map(i => (
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
                       <InputOTPSlot key={i} index={i} className="w-10 h-12 text-base font-display bg-secondary border-border" />
                     ))}
                   </InputOTPGroup>
@@ -215,16 +233,17 @@ const Auth = () => {
               <Button
                 onClick={handleVerifyOtp}
                 disabled={verifying || otp.length < 6}
-                className="w-full bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all hover:shadow-[var(--shadow-glow)]"
+                className="w-full bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all"
               >
                 {verifying ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
                 Verify & Create Account
               </Button>
 
-              {/* Resend OTP */}
               <div className="text-center">
                 {resendCountdown > 0 ? (
-                  <p className="text-xs text-muted-foreground">Resend available in <span className="text-primary font-semibold">{resendCountdown}s</span></p>
+                  <p className="text-xs text-muted-foreground">
+                    Resend in <span className="text-primary font-semibold">{resendCountdown}s</span>
+                  </p>
                 ) : (
                   <button
                     onClick={handleResendOtp}
@@ -247,17 +266,17 @@ const Auth = () => {
             </motion.div>
           ) : (
             <motion.div
-              key="form"
-              initial={{ opacity: 0, x: -60, rotateY: -15 }}
+              key="form-card"
+              initial={{ opacity: 0, x: -60, rotateY: -12 }}
               animate={{ opacity: 1, x: 0, rotateY: 0 }}
-              exit={{ opacity: 0, x: 60, rotateY: 15 }}
+              exit={{ opacity: 0, x: 60, rotateY: 12 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
               style={{ transformStyle: "preserve-3d" }}
               className="bg-card border border-border rounded-2xl p-6 shadow-2xl"
             >
               {!isLogin && (
                 <>
-                  <motion.div variants={itemVariants} className="mb-6">
+                  <motion.div variants={itemVariants} className="mb-5">
                     <Label className="text-sm text-muted-foreground mb-2 block">I am a</Label>
                     <div className="grid grid-cols-2 gap-3">
                       {(["player", "scout"] as Role[]).map((r) => (
@@ -269,7 +288,7 @@ const Auth = () => {
                           whileTap={{ scale: 0.98 }}
                           className={`py-3 rounded-xl font-display text-lg tracking-wide transition-all duration-300 border ${
                             selectedRole === r
-                              ? "bg-primary text-primary-foreground border-primary shadow-[var(--shadow-glow)]"
+                              ? "bg-primary text-primary-foreground border-primary shadow-[0_0_20px_hsl(var(--primary)/0.3)]"
                               : "bg-secondary text-secondary-foreground border-border hover:border-primary/40"
                           }`}
                         >
@@ -286,7 +305,7 @@ const Auth = () => {
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="mb-6 overflow-hidden"
+                        className="mb-5 overflow-hidden"
                       >
                         <Label className="text-sm text-muted-foreground mb-2 block">Sport Category</Label>
                         <div className="grid grid-cols-2 gap-3">
@@ -321,7 +340,7 @@ const Auth = () => {
                       id="name"
                       placeholder="Your full name"
                       required
-                      className="bg-secondary border-border transition-all focus:shadow-[var(--shadow-glow)]"
+                      className="bg-secondary border-border"
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
                     />
@@ -334,7 +353,7 @@ const Auth = () => {
                     type="email"
                     placeholder="you@example.com"
                     required
-                    className="bg-secondary border-border transition-all focus:shadow-[var(--shadow-glow)]"
+                    className="bg-secondary border-border"
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                   />
@@ -347,7 +366,7 @@ const Auth = () => {
                         id="phone"
                         placeholder="+880 1XXXXXXXXX"
                         required
-                        className="bg-secondary border-border transition-all focus:shadow-[var(--shadow-glow)]"
+                        className="bg-secondary border-border"
                         value={formPhone}
                         onChange={(e) => setFormPhone(e.target.value)}
                       />
@@ -356,7 +375,7 @@ const Auth = () => {
                       <Label htmlFor="gender" className="text-sm text-muted-foreground">Gender</Label>
                       <select
                         id="gender"
-                        className="flex h-10 w-full rounded-md border border-border bg-secondary px-3 py-2 text-sm text-foreground transition-all focus:shadow-[var(--shadow-glow)] focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="flex h-10 w-full rounded-md border border-border bg-secondary px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                         value={formGender}
                         onChange={(e) => setFormGender(e.target.value)}
                         required
@@ -378,7 +397,7 @@ const Auth = () => {
                       placeholder="••••••••"
                       required
                       minLength={6}
-                      className="bg-secondary border-border pr-10 transition-all focus:shadow-[var(--shadow-glow)]"
+                      className="bg-secondary border-border pr-10"
                       value={formPassword}
                       onChange={(e) => setFormPassword(e.target.value)}
                     />
@@ -394,7 +413,7 @@ const Auth = () => {
                 {!isLogin && selectedRole === "player" && (
                   <motion.div variants={itemVariants}>
                     <Label className="text-sm text-muted-foreground">Birth Certificate / NID</Label>
-                    <div className="mt-1 border border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary/40 transition-all duration-300 bg-secondary hover:bg-secondary/80">
+                    <div className="mt-1 border border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary/40 transition-all bg-secondary">
                       <Upload className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
                       <span className="text-xs text-muted-foreground">Click to upload</span>
                     </div>
@@ -405,7 +424,7 @@ const Auth = () => {
                     <Button
                       type="submit"
                       disabled={loading}
-                      className="w-full bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all duration-300 hover:shadow-[var(--shadow-glow)]"
+                      className="w-full bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all duration-300"
                     >
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : isLogin ? "Sign In" : "Create Account"}
                     </Button>
@@ -417,7 +436,7 @@ const Auth = () => {
                 {isLogin ? "Don't have an account? " : "Already have an account? "}
                 <button
                   type="button"
-                  onClick={() => setIsLogin(!isLogin)}
+                  onClick={() => { setIsLogin(!isLogin); setOtp(""); }}
                   className="text-primary hover:underline font-medium transition-colors"
                 >
                   {isLogin ? "Sign Up" : "Sign In"}

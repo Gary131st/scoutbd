@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Upload, Tag, CreditCard, Award, Video, Loader2, Download, CheckCircle, FileText, User, Eye } from "lucide-react";
+import { Upload, Tag, CreditCard, Award, Video, Loader2, Download, CheckCircle, FileText, User, Eye, Flag } from "lucide-react";
 import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,6 +20,12 @@ import PlayerVideosTab from "@/components/PlayerVideosTab";
 const footballTags = ["Striker", "Defender", "Goalkeeper", "Midfielder", "Winger"];
 const cricketTags = ["Bowler (Fast)", "Bowler (Spin)", "Batsman", "Wicketkeeper", "All-rounder"];
 const traitTags = ["Tactical", "Pace Abuser", "Freestyler", "Classical", "Aggressive"];
+
+interface Scout {
+  user_id: string;
+  full_name: string;
+  organization: string | null;
+}
 
 const PlayerDashboard = () => {
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
@@ -33,6 +41,11 @@ const PlayerDashboard = () => {
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [sport, setSport] = useState<string>("football");
+  const [reportOpen, setReportOpen] = useState(false);
+  const [scouts, setScouts] = useState<Scout[]>([]);
+  const [selectedScoutId, setSelectedScoutId] = useState<string>("");
+  const [reportReason, setReportReason] = useState("");
+  const [reporting, setReporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -55,6 +68,21 @@ const PlayerDashboard = () => {
           if (v.status === "live") setPaymentDone(true);
         }
       });
+      // Fetch active scouts for report dialog
+      supabase.from("scout_profiles")
+        .select("user_id, organization")
+        .eq("verification_status", "active")
+        .then(async ({ data: scoutProfiles }) => {
+          if (!scoutProfiles || scoutProfiles.length === 0) return;
+          const ids = scoutProfiles.map((s) => s.user_id);
+          const { data: profiles } = await supabase.from("profiles").select("user_id, full_name").in("user_id", ids);
+          const profileMap = new Map((profiles || []).map((p) => [p.user_id, p.full_name]));
+          setScouts(scoutProfiles.map((s) => ({
+            user_id: s.user_id,
+            full_name: profileMap.get(s.user_id) || "Unknown Scout",
+            organization: s.organization,
+          })));
+        });
     }
   }, [user, authLoading]);
 
@@ -63,42 +91,54 @@ const PlayerDashboard = () => {
     setter(list.includes(tag) ? list.filter((t) => t !== tag) : [...list, tag]);
   };
 
+  // Upload only the DB record — actual file upload happens AFTER payment
   const handleUpload = async () => {
     if (!videoFile || !user) return;
     setUploading(true);
     try {
+      // Create DB record with pending_payment status but DO NOT upload file yet
+      const { data: video, error: dbError } = await supabase.from("videos").insert({
+        user_id: user.id,
+        description,
+        video_url: null, // will be filled after payment
+        status: "pending_payment" as any,
+        position_tags: selectedPositions,
+        trait_tags: selectedTraits,
+      }).select().single();
+      if (dbError) throw dbError;
+      setVideoId(video.id);
+      setVideoStatus("pending_payment");
+      toast({ title: "Details saved!", description: "Complete payment to upload your video and go live." });
+    } catch (err: any) {
+      toast({ title: "Failed", description: err.message, variant: "destructive" });
+    } finally { setUploading(false); }
+  };
+
+  const handlePayment = async () => {
+    if (!videoId || !user || !videoFile) return;
+    setPaying(true);
+    try {
+      // 1. Process payment first
+      const { data, error } = await supabase.functions.invoke("process-payment", {
+        body: { video_id: videoId, bkash_number: bkashNumber },
+      });
+      if (error) throw error;
+
+      // 2. Only AFTER successful payment — upload the actual video file
       const ext = videoFile.name.split(".").pop();
       const filePath = `${user.id}/${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage.from("player-videos").upload(filePath, videoFile);
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from("player-videos").getPublicUrl(filePath);
-      const { data: video, error: dbError } = await supabase.from("videos").insert({
-        user_id: user.id, description, video_url: publicUrl, status: "pending_payment" as any,
-        position_tags: selectedPositions, trait_tags: selectedTraits,
-      }).select().single();
-      if (dbError) throw dbError;
-      setVideoId(video.id);
-      setVideoStatus("pending_payment");
-      toast({ title: "Video uploaded!", description: "Now complete payment to go live." });
-    } catch (err: any) {
-      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
-    } finally { setUploading(false); }
-  };
 
-  const handlePayment = async () => {
-    if (!videoId || !user) return;
-    setPaying(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("process-payment", {
-        body: { video_id: videoId, bkash_number: bkashNumber },
-      });
-      if (error) throw error;
+      // 3. Update video record with URL and live status
+      await supabase.from("videos").update({ video_url: publicUrl, status: "live" as any }).eq("id", videoId);
+
       setPaymentDone(true);
       setVideoStatus("live");
       setTransactionId(data.transaction_id);
       setPaymentId(data.payment_id);
 
-      // Send certificate notification
       await supabase.from("notifications").insert({
         user_id: user.id,
         title: "🎉 Payment Successful!",
@@ -110,6 +150,37 @@ const PlayerDashboard = () => {
     } catch (err: any) {
       toast({ title: "Payment failed", description: err.message, variant: "destructive" });
     } finally { setPaying(false); }
+  };
+
+  const handleReport = async () => {
+    if (!user || !selectedScoutId || !reportReason.trim()) return;
+    setReporting(true);
+    try {
+      const { data: scoutProfile } = await supabase.from("profiles").select("full_name").eq("user_id", selectedScoutId).maybeSingle();
+      const scoutName = scoutProfile?.full_name || "Unknown Scout";
+      const { data: myProfile } = await supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle();
+      const playerName = myProfile?.full_name || "Unknown Player";
+
+      // Notify admins only
+      const { data: adminRoles } = await supabase.from("user_roles").select("user_id").eq("role", "admin" as any);
+      if (adminRoles && adminRoles.length > 0) {
+        const notifs = adminRoles.map((a) => ({
+          user_id: a.user_id,
+          title: `🚨 Player Report: ${scoutName}`,
+          message: `Player "${playerName}" has reported scout "${scoutName}": ${reportReason}`,
+          type: "info",
+          metadata: { reporter_id: user.id, reported_scout_id: selectedScoutId },
+        }));
+        await supabase.from("notifications").insert(notifs as any);
+      }
+
+      toast({ title: "Report submitted", description: "Admin has been notified." });
+      setReportOpen(false);
+      setReportReason("");
+      setSelectedScoutId("");
+    } catch (err: any) {
+      toast({ title: "Failed to submit", description: err.message, variant: "destructive" });
+    } finally { setReporting(false); }
   };
 
   const downloadCertificate = () => {
@@ -173,8 +244,61 @@ const PlayerDashboard = () => {
     <div className="min-h-screen pt-20 pb-16">
       <div className="container max-w-4xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="font-display text-4xl text-foreground mb-2">PLAYER DASHBOARD</h1>
-          <p className="text-muted-foreground mb-6">Manage your profile, upload videos, and explore other players</p>
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h1 className="font-display text-4xl text-foreground mb-1">PLAYER DASHBOARD</h1>
+              <p className="text-muted-foreground">Manage your profile, upload videos, and explore other players</p>
+            </div>
+            {/* Report a Scout button */}
+            <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="border-destructive/40 text-destructive hover:bg-destructive/10 rounded-full text-xs shrink-0">
+                  <Flag className="h-3 w-3 mr-1" /> Report Scout
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border">
+                <DialogHeader>
+                  <DialogTitle className="font-display text-xl text-foreground">REPORT A SCOUT</DialogTitle>
+                </DialogHeader>
+                <p className="text-sm text-muted-foreground">Select the scout you want to report and describe the issue. Only the admin will see this.</p>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Select Scout</Label>
+                    <Select value={selectedScoutId} onValueChange={setSelectedScoutId}>
+                      <SelectTrigger className="bg-secondary border-border mt-1">
+                        <SelectValue placeholder="Choose a scout..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        {scouts.map((s) => (
+                          <SelectItem key={s.user_id} value={s.user_id}>
+                            {s.full_name}{s.organization ? ` — ${s.organization}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Reason / Description</Label>
+                    <Textarea
+                      placeholder="Describe what happened..."
+                      className="mt-1 bg-secondary border-border resize-none"
+                      rows={3}
+                      value={reportReason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    onClick={handleReport}
+                    disabled={reporting || !selectedScoutId || !reportReason.trim()}
+                    className="w-full bg-destructive text-white hover:bg-destructive/90"
+                  >
+                    {reporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Flag className="h-4 w-4 mr-2" />}
+                    Submit Report to Admin
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
 
           <Tabs defaultValue="upload" className="space-y-6">
             <TabsList className="bg-card border border-border">
@@ -199,19 +323,21 @@ const PlayerDashboard = () => {
                     <Badge variant={videoStatus === "live" ? "default" : "outline"} className={videoStatus === "live" ? "bg-primary text-primary-foreground" : ""}>{videoStatus}</Badge>
                   )}
                 </div>
+
                 {!videoId ? (
                   <>
                     <div onClick={() => fileRef.current?.click()} className="border-2 border-dashed border-border rounded-xl p-12 text-center hover:border-primary/40 transition-colors cursor-pointer bg-secondary/50">
                       <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                       <p className="text-foreground font-medium mb-1">{videoFile ? videoFile.name : "Drop your video here"}</p>
                       <p className="text-xs text-muted-foreground">Max 3 minutes • MP4, MOV, AVI</p>
+                      {videoFile && <p className="text-xs text-primary mt-2">✓ File selected — complete payment to upload</p>}
                     </div>
                     <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={(e) => setVideoFile(e.target.files?.[0] || null)} />
                   </>
                 ) : (
                   <div className="flex items-center gap-2 bg-secondary/50 rounded-lg p-4">
                     <CheckCircle className="h-5 w-5 text-primary" />
-                    <span className="text-foreground text-sm">Video uploaded successfully</span>
+                    <span className="text-foreground text-sm">{paymentDone ? "Video uploaded and live!" : "Details saved — complete payment to upload video"}</span>
                   </div>
                 )}
                 <div className="mt-4">
@@ -248,17 +374,23 @@ const PlayerDashboard = () => {
                 </div>
               </div>
 
+              {/* Save details (no upload yet) */}
               {!videoId && videoFile && (
-                <Button onClick={handleUpload} disabled={uploading} className="w-full bg-primary text-primary-foreground font-bold hover:bg-primary/90 glow">
-                  {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />} Upload Video
+                <Button onClick={handleUpload} disabled={uploading} className="w-full bg-primary text-primary-foreground font-bold hover:bg-primary/90">
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+                  Save Details & Proceed to Payment
                 </Button>
               )}
 
+              {/* Payment — only after details saved, before payment done */}
               {videoId && !paymentDone && (
                 <div className="bg-card border border-border rounded-xl p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <CreditCard className="h-5 w-5 text-primary" />
                     <h2 className="font-display text-xl text-foreground">PAYMENT</h2>
+                  </div>
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-4 text-sm text-muted-foreground">
+                    💡 Your video will be uploaded <span className="text-foreground font-medium">only after</span> payment is confirmed.
                   </div>
                   <div className="flex items-center justify-between bg-secondary rounded-lg p-4 mb-4">
                     <div>
@@ -271,12 +403,14 @@ const PlayerDashboard = () => {
                     <Label className="text-sm text-muted-foreground">bKash Number</Label>
                     <Input placeholder="01XXXXXXXXX" className="mt-1 bg-secondary border-border" value={bkashNumber} onChange={(e) => setBkashNumber(e.target.value)} />
                   </div>
-                  <Button className="w-full bg-primary text-primary-foreground font-bold hover:bg-primary/90 glow" onClick={handlePayment} disabled={paying || !bkashNumber}>
-                    {paying ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null} Pay with bKash & Go Live
+                  <Button className="w-full bg-primary text-primary-foreground font-bold hover:bg-primary/90" onClick={handlePayment} disabled={paying || !bkashNumber || !videoFile}>
+                    {paying ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    {paying ? "Uploading & Processing..." : "Pay with bKash & Upload Video"}
                   </Button>
                 </div>
               )}
 
+              {/* Documents — only after payment */}
               {paymentDone && (
                 <div className="bg-card border border-border rounded-xl p-6">
                   <div className="flex items-center gap-3 mb-4">
