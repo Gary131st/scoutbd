@@ -113,41 +113,41 @@ const ScoutDashboard = () => {
   if (authLoading || loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
-    <div className="min-h-screen pt-20 pb-16">
+    <div className="min-h-screen pt-16 pb-20 md:pb-8">
       <div className="container">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="font-display text-4xl text-foreground">SCOUT DASHBOARD</h1>
+          <div className="flex items-center gap-2 mb-1 pt-4">
+            <h1 className="font-display text-3xl sm:text-4xl text-foreground">SCOUT DASHBOARD</h1>
             {scoutStatus && (
-              <Badge className={`text-sm rounded-full ${scoutStatus === "active" ? "bg-primary/20 text-primary border-primary/30" : scoutStatus === "pending" ? "bg-accent/20 text-accent border-accent/30" : "bg-destructive/20 text-destructive border-destructive/30"}`}>
+              <Badge className={`text-xs rounded-full shrink-0 ${scoutStatus === "active" ? "bg-primary/20 text-primary border-primary/30" : scoutStatus === "pending" ? "bg-accent/20 text-accent border-accent/30" : "bg-destructive/20 text-destructive border-destructive/30"}`}>
                 {scoutStatus === "active" ? <ShieldCheck className="h-3 w-3 mr-1" /> : <ShieldAlert className="h-3 w-3 mr-1" />}
                 {scoutStatus.toUpperCase()}
               </Badge>
             )}
           </div>
-          <p className="text-muted-foreground mb-6">Browse and select players from across Bangladesh</p>
+          <p className="text-sm text-muted-foreground mb-5">Browse and select players from across Bangladesh</p>
 
           {scoutStatus === "pending" && (
-            <div className="bg-accent/10 border border-accent/30 rounded-2xl p-6 mb-8 text-center">
-              <ShieldAlert className="h-8 w-8 text-accent mx-auto mb-2" />
-              <h3 className="font-display text-xl text-foreground mb-1">VERIFICATION PENDING</h3>
+            <div className="bg-accent/10 border border-accent/30 rounded-xl p-5 mb-6 text-center">
+              <ShieldAlert className="h-7 w-7 text-accent mx-auto mb-2" />
+              <h3 className="font-display text-lg text-foreground mb-1">VERIFICATION PENDING</h3>
               <p className="text-sm text-muted-foreground">Your scout account is under review.</p>
             </div>
           )}
 
-          <Tabs defaultValue="talent" className="space-y-6">
-            <TabsList className="bg-card border border-border flex-wrap">
-              <TabsTrigger value="talent" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Search className="h-4 w-4 mr-1.5" /> Talent Database
+          <Tabs defaultValue="talent" className="space-y-4 sm:space-y-6">
+            <TabsList className="bg-card border border-border w-full grid grid-cols-4">
+              <TabsTrigger value="talent" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm px-1">
+                <Search className="h-3.5 w-3.5 shrink-0" /> <span className="hidden sm:inline ml-1">Talent</span>
               </TabsTrigger>
-              <TabsTrigger value="requests" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <ClipboardList className="h-4 w-4 mr-1.5" /> My Selections ({requests.length})
+              <TabsTrigger value="requests" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm px-1">
+                <ClipboardList className="h-3.5 w-3.5 shrink-0" /> <span className="hidden sm:inline ml-1">Selections</span><span className="sm:hidden ml-0.5 text-[10px]">({requests.length})</span>
               </TabsTrigger>
-              <TabsTrigger value="messages" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <MessageSquare className="h-4 w-4 mr-1.5" /> Messages
+              <TabsTrigger value="messages" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm px-1">
+                <MessageSquare className="h-3.5 w-3.5 shrink-0" /> <span className="hidden sm:inline ml-1">Messages</span>
               </TabsTrigger>
-              <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <User className="h-4 w-4 mr-1.5" /> My Profile
+              <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm px-1">
+                <User className="h-3.5 w-3.5 shrink-0" /> <span className="hidden sm:inline ml-1">Profile</span>
               </TabsTrigger>
             </TabsList>
 

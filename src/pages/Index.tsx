@@ -19,8 +19,8 @@ const Index = () => {
       {/* Hero */}
       <section className="relative min-h-screen flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroBg})` }} />
-        <div className="absolute inset-0 bg-background/85" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+        <div className="absolute inset-0 bg-background/65" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
 
         {/* Floating orbs — hidden on mobile to avoid overflow */}
         <motion.div
