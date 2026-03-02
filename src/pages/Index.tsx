@@ -6,9 +6,9 @@ import { useAuth } from "@/hooks/useAuth";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const stats = [
-  { label: "Players Registered", value: "2,500+", icon: Users },
-  { label: "Verified Scouts", value: "120+", icon: Shield },
-  { label: "Talent Discovered", value: "340+", icon: Trophy },
+  { label: "Players Registered", value: "2,500+", Icon: Users },
+  { label: "Verified Scouts", value: "120+", Icon: Shield },
+  { label: "Talent Discovered", value: "340+", Icon: Trophy },
 ];
 
 const Index = () => {
@@ -117,7 +117,7 @@ const Index = () => {
                   animate={{ rotateY: [0, 5, 0] }}
                   transition={{ duration: 4, repeat: Infinity, delay: i * 0.5 }}
                 >
-                  <stat.icon className="h-8 w-8 text-primary mx-auto mb-3" />
+                  <stat.Icon className="h-8 w-8 text-primary mx-auto mb-3" />
                 </motion.div>
                 <div className="font-display text-4xl text-foreground mb-1">{stat.value}</div>
                 <div className="text-sm text-muted-foreground">{stat.label}</div>

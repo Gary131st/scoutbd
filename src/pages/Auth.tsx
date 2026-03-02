@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { Zap, Upload, Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
+import { Zap, Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,39 @@ import { supabase } from "@/integrations/supabase/client";
 
 type Role = "player" | "scout";
 type Sport = "football" | "cricket";
+
+const ForgotPasswordInline = ({ email, toast }: { email: string; toast: any }) => {
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const handleForgot = async () => {
+    if (!email) {
+      toast({ title: "Enter your email first", description: "Type your email above then click Forgot Password.", variant: "destructive" });
+      return;
+    }
+    setSending(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      setSent(true);
+      toast({ title: "Reset link sent!", description: "Check your email for the password reset link." });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (sent) return <span className="text-foreground">Reset link sent! Check your email.</span>;
+
+  return (
+    <button type="button" onClick={handleForgot} disabled={sending} className="text-foreground hover:underline font-medium transition-colors disabled:opacity-60">
+      {sending ? "Sending..." : "Forgot Password?"}
+    </button>
+  );
+};
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -297,13 +330,7 @@ const Auth = () => {
               </div>
             </div>
             {!isLogin && selectedRole === "player" && (
-              <div>
-                <Label className="text-sm text-muted-foreground">Birth Certificate / NID</Label>
-                <div className="mt-1 border border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-foreground/30 transition-all bg-secondary">
-                  <Upload className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
-                  <span className="text-xs text-muted-foreground">Click to upload</span>
-                </div>
-              </div>
+              <div className="hidden" />
             )}
             <Button
               type="submit"
@@ -324,6 +351,11 @@ const Auth = () => {
               {isLogin ? "Sign Up" : "Sign In"}
             </button>
           </p>
+          {isLogin && (
+            <p className="text-center text-sm text-muted-foreground mt-2">
+              <ForgotPasswordInline email={formEmail} toast={toast} />
+            </p>
+          )}
         </motion.div>
       </div>
     </div>

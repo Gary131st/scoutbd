@@ -41,6 +41,30 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
       certificates: {
         Row: {
           certificate_url: string | null
@@ -197,6 +221,7 @@ export type Database = {
           gender: string | null
           guardian_contact: string | null
           id: string
+          is_banned: boolean
           phone: string | null
           sport: string | null
           updated_at: string
@@ -212,6 +237,7 @@ export type Database = {
           gender?: string | null
           guardian_contact?: string | null
           id?: string
+          is_banned?: boolean
           phone?: string | null
           sport?: string | null
           updated_at?: string
@@ -227,6 +253,7 @@ export type Database = {
           gender?: string | null
           guardian_contact?: string | null
           id?: string
+          is_banned?: boolean
           phone?: string | null
           sport?: string | null
           updated_at?: string
@@ -239,6 +266,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_banned: boolean
           organization: string | null
           updated_at: string
           user_id: string
@@ -247,6 +275,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_banned?: boolean
           organization?: string | null
           updated_at?: string
           user_id: string
@@ -255,6 +284,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_banned?: boolean
           organization?: string | null
           updated_at?: string
           user_id?: string
