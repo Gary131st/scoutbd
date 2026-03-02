@@ -34,7 +34,7 @@ const Index = () => {
           className="hidden sm:block absolute bottom-1/3 right-1/3 w-40 h-40 rounded-full bg-primary/8 border border-primary/15 blur-lg pointer-events-none"
         />
 
-        <div className="container relative z-10 pt-12 pb-12 sm:pt-20 sm:pb-16">
+        <div className="container relative z-10 pt-20 pb-12 sm:pt-28 sm:pb-16" style={{ marginTop: "-10vh" }}>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
