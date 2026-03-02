@@ -5,9 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AnimatePresence, motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import LoadingIntro from "@/components/LoadingIntro";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import PlayerDashboard from "./pages/PlayerDashboard";
@@ -17,6 +19,7 @@ import SafeScouting from "./pages/SafeScouting";
 import Mission from "./pages/Mission";
 import FAQ from "./pages/FAQ";
 import AdminDashboard from "./pages/AdminDashboard";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +52,7 @@ const AnimatedRoutes = () => {
         <Routes location={location}>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/player" element={<ProtectedRoute allowedRoles={["player"]}><PlayerDashboard /></ProtectedRoute>} />
           <Route path="/scout" element={<ProtectedRoute allowedRoles={["scout"]}><ScoutDashboard /></ProtectedRoute>} />
           <Route path="/resume/:userId" element={<PlayerResume />} />
@@ -64,19 +68,32 @@ const AnimatedRoutes = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Navbar />
-          <AnimatedRoutes />
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [showIntro, setShowIntro] = useState(() => !sessionStorage.getItem("introShown"));
+
+  const handleIntroDone = () => {
+    setShowIntro(false);
+    sessionStorage.setItem("introShown", "1");
+  };
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        {showIntro ? (
+          <LoadingIntro onDone={handleIntroDone} />
+        ) : (
+          <BrowserRouter>
+            <AuthProvider>
+              <Navbar />
+              <AnimatedRoutes />
+            </AuthProvider>
+          </BrowserRouter>
+        )}
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

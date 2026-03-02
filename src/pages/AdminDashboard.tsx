@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Users, Video, DollarSign, CheckCircle, XCircle, Clock, Loader2, Eye, AlertTriangle, MessageSquare, UserPlus, Send, User, Search, Filter } from "lucide-react";
+import { Shield, Users, Video, DollarSign, CheckCircle, XCircle, Clock, Loader2, Eye, AlertTriangle, MessageSquare, UserPlus, Send, User, Search, Filter, Ban, Power } from "lucide-react";
 import ChatInterface from "@/components/ChatInterface";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import ProfileTab from "@/components/ProfileTab";
 import AdminNoticeForm from "@/components/AdminNoticeForm";
 
-interface ScoutRow { id: string; user_id: string; organization: string | null; verification_status: string; created_at: string; full_name?: string; }
+interface ScoutRow { id: string; user_id: string; organization: string | null; verification_status: string; created_at: string; full_name?: string; is_banned?: boolean; }
+interface PlayerRow { user_id: string; full_name: string; is_banned?: boolean; sport?: string | null; }
 interface VideoRow { id: string; user_id: string; title: string | null; description: string | null; video_url: string | null; status: string; created_at: string; full_name?: string; }
 interface MessageRow { id: string; sender_id: string; receiver_id: string; content: string; flagged: boolean; flag_reason: string | null; created_at: string; sender_name?: string; receiver_name?: string; }
 interface ScoutRequestRow { id: string; scout_id: string; player_id: string; status: string; notes: string | null; admin_response: string | null; created_at: string; scout_name?: string; player_name?: string; }
@@ -22,12 +23,15 @@ interface Stats { totalPlayers: number; totalScouts: number; activeScouts: numbe
 const AdminDashboard = () => {
   const { user, role, loading: authLoading } = useAuth();
   const [scouts, setScouts] = useState<ScoutRow[]>([]);
+  const [players, setPlayers] = useState<PlayerRow[]>([]);
   const [videos, setVideos] = useState<VideoRow[]>([]);
   const [messages, setMessages] = useState<MessageRow[]>([]);
   const [scoutRequests, setScoutRequests] = useState<ScoutRequestRow[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [feedbackInputs, setFeedbackInputs] = useState<Record<string, string>>({});
+  const [uploadsHalted, setUploadsHalted] = useState(false);
+  const [haltLoading, setHaltLoading] = useState(false);
   // Search & filter states
   const [scoutSearch, setScoutSearch] = useState("");
   const [scoutFilter, setScoutFilter] = useState<string>("all");
@@ -48,13 +52,14 @@ const AdminDashboard = () => {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [scoutRes, videoRes, roleRes, paymentRes, msgRes, reqRes] = await Promise.all([
+    const [scoutRes, videoRes, roleRes, paymentRes, msgRes, reqRes, settingsRes] = await Promise.all([
       supabase.from("scout_profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("videos").select("*").order("created_at", { ascending: false }),
-      supabase.from("user_roles").select("role"),
+      supabase.from("user_roles").select("role, user_id"),
       supabase.from("payments").select("amount, status"),
       supabase.from("messages").select("*").order("created_at", { ascending: false }).limit(100),
       supabase.from("scout_requests").select("*").order("created_at", { ascending: false }),
+      supabase.from("app_settings" as any).select("key, value"),
     ]);
 
     const scoutData = scoutRes.data || [];
@@ -64,23 +69,37 @@ const AdminDashboard = () => {
     const msgData = msgRes.data || [];
     const reqData = (reqRes.data || []) as ScoutRequestRow[];
 
+    // Parse settings
+    const settingsData = (settingsRes.data || []) as any[];
+    const haltSetting = settingsData.find((s: any) => s.key === "video_uploads_halted");
+    setUploadsHalted(haltSetting?.value === "true");
+
+    const playerUserIds = roles.filter((r) => r.role === "player").map((r) => r.user_id);
+
     const allUserIds = [...new Set([
       ...scoutData.map((s) => s.user_id),
       ...videoData.map((v) => v.user_id),
       ...msgData.flatMap((m) => [m.sender_id, m.receiver_id]),
       ...reqData.flatMap((r) => [r.scout_id, r.player_id]),
+      ...playerUserIds,
     ])];
 
-    let profileMap = new Map<string, string>();
+    let profileMap = new Map<string, { name: string; is_banned: boolean; sport?: string | null }>();
     if (allUserIds.length > 0) {
-      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name").in("user_id", allUserIds);
-      (profiles || []).forEach((p) => profileMap.set(p.user_id, p.full_name));
+      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, is_banned, sport").in("user_id", allUserIds);
+      (profiles || []).forEach((p) => profileMap.set(p.user_id, { name: p.full_name, is_banned: (p as any).is_banned || false, sport: (p as any).sport }));
     }
 
-    setScouts(scoutData.map((s) => ({ ...s, full_name: profileMap.get(s.user_id) || "Unknown" })));
-    setVideos(videoData.map((v) => ({ ...v, full_name: profileMap.get(v.user_id) || "Unknown" })));
-    setMessages(msgData.map((m) => ({ ...m, sender_name: profileMap.get(m.sender_id) || "Unknown", receiver_name: profileMap.get(m.receiver_id) || "Unknown" })));
-    setScoutRequests(reqData.map((r) => ({ ...r, scout_name: profileMap.get(r.scout_id) || "Unknown", player_name: profileMap.get(r.player_id) || "Unknown" })));
+    setScouts(scoutData.map((s) => ({ ...s, full_name: profileMap.get(s.user_id)?.name || "Unknown", is_banned: (s as any).is_banned || false })));
+    setPlayers(playerUserIds.map((uid) => ({
+      user_id: uid,
+      full_name: profileMap.get(uid)?.name || "Unknown",
+      is_banned: profileMap.get(uid)?.is_banned || false,
+      sport: profileMap.get(uid)?.sport,
+    })));
+    setVideos(videoData.map((v) => ({ ...v, full_name: profileMap.get(v.user_id)?.name || "Unknown" })));
+    setMessages(msgData.map((m) => ({ ...m, sender_name: profileMap.get(m.sender_id)?.name || "Unknown", receiver_name: profileMap.get(m.receiver_id)?.name || "Unknown" })));
+    setScoutRequests(reqData.map((r) => ({ ...r, scout_name: profileMap.get(r.scout_id)?.name || "Unknown", player_name: profileMap.get(r.player_id)?.name || "Unknown" })));
 
     setStats({
       totalPlayers: roles.filter((r) => r.role === "player").length,
@@ -99,6 +118,27 @@ const AdminDashboard = () => {
     const { error } = await supabase.from("scout_profiles").update({ verification_status: status }).eq("id", scoutId);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); }
     else { toast({ title: `Scout ${status === "active" ? "approved" : "rejected"}` }); fetchAll(); }
+  };
+
+  const banScout = async (scoutUserId: string, banned: boolean) => {
+    const { error } = await supabase.from("scout_profiles").update({ is_banned: !banned } as any).eq("user_id", scoutUserId);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: !banned ? "Scout banned" : "Scout unbanned" }); fetchAll(); }
+  };
+
+  const banPlayer = async (playerUserId: string, banned: boolean) => {
+    const { error } = await supabase.from("profiles").update({ is_banned: !banned } as any).eq("user_id", playerUserId);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: !banned ? "Player banned" : "Player unbanned" }); fetchAll(); }
+  };
+
+  const toggleUploadsHalt = async () => {
+    setHaltLoading(true);
+    const newVal = !uploadsHalted ? "true" : "false";
+    const { error } = await supabase.from("app_settings" as any).update({ value: newVal, updated_by: user?.id } as any).eq("key", "video_uploads_halted");
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { setUploadsHalted(!uploadsHalted); toast({ title: !uploadsHalted ? "Video uploads halted" : "Video uploads resumed" }); }
+    setHaltLoading(false);
   };
 
   const updateVideoStatus = async (videoId: string, status: "live" | "rejected") => {
@@ -266,9 +306,11 @@ const AdminDashboard = () => {
           <Tabs defaultValue="scouts" className="space-y-6">
             <TabsList className="bg-card border border-border flex-wrap">
               <TabsTrigger value="scouts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Scouts ({stats?.pendingScouts || 0})</TabsTrigger>
+              <TabsTrigger value="players" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Players</TabsTrigger>
               <TabsTrigger value="videos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Videos</TabsTrigger>
               <TabsTrigger value="requests" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Requests ({stats?.pendingRequests || 0})</TabsTrigger>
               <TabsTrigger value="safety" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Safety ({stats?.flaggedMessages || 0})</TabsTrigger>
+              <TabsTrigger value="controls" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Controls</TabsTrigger>
               <TabsTrigger value="notices" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Notices</TabsTrigger>
               <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Profile</TabsTrigger>
             </TabsList>
@@ -280,8 +322,9 @@ const AdminDashboard = () => {
               {filteredScouts.length === 0 ? <p className="text-muted-foreground text-center py-12">No scouts found.</p> : filteredScouts.map((s) => (
                 <div key={s.id} className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground truncate">{s.full_name}</p>
+                    <p className={`font-semibold truncate ${s.is_banned ? "line-through text-muted-foreground" : "text-foreground"}`}>{s.full_name}</p>
                     <p className="text-xs text-muted-foreground">{s.organization || "No organization"} • {new Date(s.created_at).toLocaleDateString()}</p>
+                    {s.is_banned && <Badge className="mt-1 text-[10px] bg-destructive/20 text-destructive border-destructive/30 rounded-full">Banned</Badge>}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge className={`rounded-full ${s.verification_status === "active" ? "bg-primary/20 text-primary border-primary/30" : s.verification_status === "pending" ? "bg-accent/20 text-accent-foreground border-accent/30" : "bg-destructive/20 text-destructive border-destructive/30"}`}>
@@ -296,7 +339,29 @@ const AdminDashboard = () => {
                         <Button size="sm" variant="outline" onClick={() => updateScoutStatus(s.id, "rejected")} className="border-destructive/40 text-destructive hover:bg-destructive/10 rounded-full text-xs">Reject</Button>
                       </>
                     )}
+                    <Button size="sm" variant="outline" onClick={() => banScout(s.user_id, s.is_banned || false)}
+                      className={`rounded-full text-xs ${s.is_banned ? "border-primary/40 text-primary hover:bg-primary/10" : "border-destructive/40 text-destructive hover:bg-destructive/10"}`}>
+                      <Ban className="h-3 w-3 mr-1" />{s.is_banned ? "Unban" : "Ban"}
+                    </Button>
                   </div>
+                </div>
+              ))}
+            </TabsContent>
+
+            {/* Players Tab */}
+            <TabsContent value="players" className="space-y-3">
+              <p className="text-xs text-muted-foreground mb-2">{players.length} registered players</p>
+              {players.length === 0 ? <p className="text-muted-foreground text-center py-12">No players found.</p> : players.map((p) => (
+                <div key={p.user_id} className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-semibold truncate ${p.is_banned ? "line-through text-muted-foreground" : "text-foreground"}`}>{p.full_name}</p>
+                    <p className="text-xs text-muted-foreground">{p.sport || "No sport"}</p>
+                    {p.is_banned && <Badge className="mt-1 text-[10px] bg-destructive/20 text-destructive border-destructive/30 rounded-full">Banned</Badge>}
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => banPlayer(p.user_id, p.is_banned || false)}
+                    className={`rounded-full text-xs shrink-0 ${p.is_banned ? "border-primary/40 text-primary hover:bg-primary/10" : "border-destructive/40 text-destructive hover:bg-destructive/10"}`}>
+                    <Ban className="h-3 w-3 mr-1" />{p.is_banned ? "Unban" : "Ban"}
+                  </Button>
                 </div>
               ))}
             </TabsContent>
@@ -366,6 +431,33 @@ const AdminDashboard = () => {
                 </div>
               </div>
               <ChatInterface adminView={true} />
+            </TabsContent>
+
+            {/* Controls Tab */}
+            <TabsContent value="controls" className="space-y-4">
+              <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <Power className="h-5 w-5 text-primary" />
+                  <h2 className="font-display text-xl text-foreground">PLATFORM CONTROLS</h2>
+                </div>
+                <div className="flex items-center justify-between bg-secondary rounded-xl p-4">
+                  <div>
+                    <p className="font-semibold text-foreground">Video Uploads</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {uploadsHalted ? "Currently halted — players see monthly limit message" : "Currently accepting video uploads"}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={toggleUploadsHalt}
+                    disabled={haltLoading}
+                    variant="outline"
+                    className={uploadsHalted ? "border-primary/40 text-primary hover:bg-primary/10 rounded-full" : "border-destructive/40 text-destructive hover:bg-destructive/10 rounded-full"}
+                  >
+                    {haltLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Power className="h-4 w-4 mr-2" />}
+                    {uploadsHalted ? "Resume Uploads" : "Halt Uploads"}
+                  </Button>
+                </div>
+              </div>
             </TabsContent>
 
             {/* Notices Tab */}
