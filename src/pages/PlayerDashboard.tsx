@@ -61,6 +61,7 @@ const PlayerDashboard = () => {
   const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
   const [showNewUpload, setShowNewUpload] = useState(false);
   const [uploadsHalted, setUploadsHalted] = useState(false);
+  const [activeTab, setActiveTab] = useState("upload");
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -455,8 +456,6 @@ const PlayerDashboard = () => {
     doc.text("Scout BD — Digitizing Bangladesh Sports", w / 2, h - 12, { align: "center" });
 
     doc.save("ScoutBD_Invoice.pdf");
-  };
-
   if (authLoading) return <div className="min-h-screen flex items-center justify-center pt-16 pb-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   const liveVideos = allVideos.filter((v) => v.status === "live");
@@ -521,7 +520,7 @@ const PlayerDashboard = () => {
             </Dialog>
           </div>
 
-          <Tabs defaultValue="upload" className="space-y-4 sm:space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
             <TabsList className="bg-card border border-border w-full grid grid-cols-3">
               <TabsTrigger value="upload" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
                 <Upload className="h-3.5 w-3.5 sm:mr-1.5 shrink-0" /> <span className="hidden sm:inline">Upload Hub</span><span className="sm:hidden ml-1">Upload</span>
@@ -535,60 +534,12 @@ const PlayerDashboard = () => {
             </TabsList>
 
             <TabsContent value="upload" className="space-y-6">
-              {/* My Videos List */}
-              {allVideos.length > 0 && (
-                <div className="bg-card border border-border rounded-xl p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <Video className="h-5 w-5 text-primary" />
-                      <h2 className="font-display text-xl text-foreground">MY VIDEOS</h2>
-                      <Badge variant="outline" className="text-xs border-border text-muted-foreground">{allVideos.length}</Badge>
-                    </div>
-                    <Button size="sm" variant="outline" onClick={() => { resetUploadForm(); setShowNewUpload(true); }} className="border-primary/40 text-primary hover:bg-primary/10 rounded-full text-xs">
-                      <Plus className="h-3 w-3 mr-1" /> Upload New
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {allVideos.map((vid) => (
-                      <div key={vid.id} className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
-                        <div className="w-12 h-12 rounded-lg bg-secondary overflow-hidden shrink-0">
-                          {vid.video_url ? (
-                            <video src={vid.video_url} className="w-full h-full object-cover" muted />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center"><Video className="h-4 w-4 text-muted-foreground" /></div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-foreground truncate">{vid.description || "No description"}</p>
-                          <p className="text-xs text-muted-foreground">{new Date(vid.created_at).toLocaleDateString()}</p>
-                        </div>
-                        <Badge className={`text-xs rounded-full shrink-0 ${vid.status === "live" ? "bg-primary/20 text-primary border-primary/30" : vid.status === "pending_payment" ? "bg-accent/20 text-accent border-accent/30" : "bg-muted text-muted-foreground border-border"}`}>
-                          {vid.status.replace("_", " ")}
-                        </Badge>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 h-8 w-8 p-0 shrink-0">
-                              {deletingVideoId === vid.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-card border-border">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle className="flex items-center gap-2 text-foreground">
-                                <AlertTriangle className="h-5 w-5 text-destructive" /> Delete Video?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription className="text-muted-foreground">
-                                This will permanently delete this video{vid.status === "live" ? " and remove it from the talent database" : ""}. This cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel className="bg-secondary border-border text-foreground">Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteVideo(vid)} className="bg-destructive text-white hover:bg-destructive/90">Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    ))}
-                  </div>
+              {/* Upload New button when videos already exist */}
+              {allVideos.length > 0 && !showNewUpload && (
+                <div className="flex justify-end">
+                  <Button size="sm" variant="outline" onClick={() => { resetUploadForm(); setShowNewUpload(true); }} className="border-primary/40 text-primary hover:bg-primary/10 rounded-full text-xs">
+                    <Plus className="h-3 w-3 mr-1" /> Upload New Video
+                  </Button>
                 </div>
               )}
 
@@ -765,7 +716,7 @@ const PlayerDashboard = () => {
             </TabsContent>
 
             <TabsContent value="profile">
-              <ProfileTab />
+              <ProfileTab showVideos={allVideos} onDeleteVideo={handleDeleteVideo} deletingVideoId={deletingVideoId} />
             </TabsContent>
           </Tabs>
         </motion.div>

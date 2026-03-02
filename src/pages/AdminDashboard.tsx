@@ -274,73 +274,78 @@ const AdminDashboard = () => {
   );
 
   return (
-    <div className="min-h-screen pt-20 pb-16">
+    <div className="min-h-screen pt-16 pb-20 md:pb-8">
       <div className="container">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-center gap-3 mb-8">
-            <Shield className="h-8 w-8 text-primary" />
-            <h1 className="font-display text-4xl text-foreground">ADMIN PANEL</h1>
+          <div className="flex items-center gap-2 mb-4 pt-4">
+            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
+            <h1 className="font-display text-3xl sm:text-4xl text-foreground">ADMIN PANEL</h1>
           </div>
 
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3 mb-5">
               {[
                 { label: "Players", value: stats.totalPlayers, icon: Users },
                 { label: "Scouts", value: `${stats.activeScouts}/${stats.totalScouts}`, icon: Shield },
-                { label: "Live Videos", value: stats.liveVideos, icon: Video },
+                { label: "Videos", value: stats.liveVideos, icon: Video },
                 { label: "Revenue", value: `৳${stats.totalRevenue}`, icon: DollarSign },
                 { label: "Flagged", value: stats.flaggedMessages, icon: AlertTriangle },
                 { label: "Requests", value: stats.pendingRequests, icon: UserPlus },
               ].map((s) => (
-                <div key={s.label} className="bg-card border border-border rounded-2xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <s.icon className="h-4 w-4 text-primary" />
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{s.label}</span>
+                <div key={s.label} className="bg-card border border-border rounded-xl p-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <s.icon className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <span className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wider truncate">{s.label}</span>
                   </div>
-                  <p className="font-display text-3xl text-foreground">{s.value}</p>
+                  <p className="font-display text-2xl sm:text-3xl text-foreground">{s.value}</p>
                 </div>
               ))}
             </div>
           )}
 
-          <Tabs defaultValue="scouts" className="space-y-6">
-            <TabsList className="bg-card border border-border flex-wrap">
-              <TabsTrigger value="scouts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Scouts ({stats?.pendingScouts || 0})</TabsTrigger>
-              <TabsTrigger value="players" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Players</TabsTrigger>
-              <TabsTrigger value="videos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Videos</TabsTrigger>
-              <TabsTrigger value="requests" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Requests ({stats?.pendingRequests || 0})</TabsTrigger>
-              <TabsTrigger value="safety" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Safety ({stats?.flaggedMessages || 0})</TabsTrigger>
-              <TabsTrigger value="controls" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Controls</TabsTrigger>
-              <TabsTrigger value="notices" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Notices</TabsTrigger>
-              <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Profile</TabsTrigger>
-            </TabsList>
+          <Tabs defaultValue="scouts" className="space-y-4">
+            {/* Mobile: horizontally scrollable tab row */}
+            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+              <TabsList className="bg-card border border-border flex w-max sm:w-full sm:flex-wrap min-w-full">
+                <TabsTrigger value="scouts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs whitespace-nowrap px-3">Scouts {stats?.pendingScouts ? `(${stats.pendingScouts})` : ""}</TabsTrigger>
+                <TabsTrigger value="players" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs whitespace-nowrap px-3">Players</TabsTrigger>
+                <TabsTrigger value="videos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs whitespace-nowrap px-3">Videos</TabsTrigger>
+                <TabsTrigger value="requests" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs whitespace-nowrap px-3">Requests {stats?.pendingRequests ? `(${stats.pendingRequests})` : ""}</TabsTrigger>
+                <TabsTrigger value="safety" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs whitespace-nowrap px-3">Safety {stats?.flaggedMessages ? `(${stats.flaggedMessages})` : ""}</TabsTrigger>
+                <TabsTrigger value="controls" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs whitespace-nowrap px-3">Controls</TabsTrigger>
+                <TabsTrigger value="notices" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs whitespace-nowrap px-3">Notices</TabsTrigger>
+                <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs whitespace-nowrap px-3">Profile</TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* Scouts Tab */}
             <TabsContent value="scouts" className="space-y-3">
               <SearchFilterBar search={scoutSearch} setSearch={setScoutSearch} filter={scoutFilter} setFilter={setScoutFilter} placeholder="Search scouts..."
                 filters={[{ value: "pending", label: "Pending" }, { value: "active", label: "Active" }, { value: "rejected", label: "Rejected" }]} />
               {filteredScouts.length === 0 ? <p className="text-muted-foreground text-center py-12">No scouts found.</p> : filteredScouts.map((s) => (
-                <div key={s.id} className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className={`font-semibold truncate ${s.is_banned ? "line-through text-muted-foreground" : "text-foreground"}`}>{s.full_name}</p>
-                    <p className="text-xs text-muted-foreground">{s.organization || "No organization"} • {new Date(s.created_at).toLocaleDateString()}</p>
-                    {s.is_banned && <Badge className="mt-1 text-[10px] bg-destructive/20 text-destructive border-destructive/30 rounded-full">Banned</Badge>}
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Badge className={`rounded-full ${s.verification_status === "active" ? "bg-primary/20 text-primary border-primary/30" : s.verification_status === "pending" ? "bg-accent/20 text-accent-foreground border-accent/30" : "bg-destructive/20 text-destructive border-destructive/30"}`}>
+                <div key={s.id} className="bg-card border border-border rounded-xl p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-semibold truncate ${s.is_banned ? "line-through text-muted-foreground" : "text-foreground"}`}>{s.full_name}</p>
+                      <p className="text-xs text-muted-foreground">{s.organization || "No organization"} • {new Date(s.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <Badge className={`rounded-full shrink-0 ${s.verification_status === "active" ? "bg-primary/20 text-primary border-primary/30" : s.verification_status === "pending" ? "bg-accent/20 text-accent-foreground border-accent/30" : "bg-destructive/20 text-destructive border-destructive/30"}`}>
                       {s.verification_status === "active" && <CheckCircle className="h-3 w-3 mr-1" />}
                       {s.verification_status === "pending" && <Clock className="h-3 w-3 mr-1" />}
                       {s.verification_status === "rejected" && <XCircle className="h-3 w-3 mr-1" />}
                       {s.verification_status}
                     </Badge>
+                  </div>
+                  {s.is_banned && <Badge className="text-[10px] bg-destructive/20 text-destructive border-destructive/30 rounded-full">Banned</Badge>}
+                  <div className="flex gap-2 flex-wrap">
                     {s.verification_status === "pending" && (
                       <>
-                        <Button size="sm" onClick={() => updateScoutStatus(s.id, "active")} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs">Approve</Button>
-                        <Button size="sm" variant="outline" onClick={() => updateScoutStatus(s.id, "rejected")} className="border-destructive/40 text-destructive hover:bg-destructive/10 rounded-full text-xs">Reject</Button>
+                        <Button size="sm" onClick={() => updateScoutStatus(s.id, "active")} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs">Approve</Button>
+                        <Button size="sm" variant="outline" onClick={() => updateScoutStatus(s.id, "rejected")} className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10 rounded-full text-xs">Reject</Button>
                       </>
                     )}
                     <Button size="sm" variant="outline" onClick={() => banScout(s.user_id, s.is_banned || false)}
-                      className={`rounded-full text-xs ${s.is_banned ? "border-primary/40 text-primary hover:bg-primary/10" : "border-destructive/40 text-destructive hover:bg-destructive/10"}`}>
+                      className={`flex-1 rounded-full text-xs ${s.is_banned ? "border-primary/40 text-primary hover:bg-primary/10" : "border-destructive/40 text-destructive hover:bg-destructive/10"}`}>
                       <Ban className="h-3 w-3 mr-1" />{s.is_banned ? "Unban" : "Ban"}
                     </Button>
                   </div>
@@ -352,7 +357,7 @@ const AdminDashboard = () => {
             <TabsContent value="players" className="space-y-3">
               <p className="text-xs text-muted-foreground mb-2">{players.length} registered players</p>
               {players.length === 0 ? <p className="text-muted-foreground text-center py-12">No players found.</p> : players.map((p) => (
-                <div key={p.user_id} className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-4">
+                <div key={p.user_id} className="bg-card border border-border rounded-xl p-4 flex items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <p className={`font-semibold truncate ${p.is_banned ? "line-through text-muted-foreground" : "text-foreground"}`}>{p.full_name}</p>
                     <p className="text-xs text-muted-foreground">{p.sport || "No sport"}</p>
@@ -371,18 +376,20 @@ const AdminDashboard = () => {
               <SearchFilterBar search={videoSearch} setSearch={setVideoSearch} filter={videoFilter} setFilter={setVideoFilter} placeholder="Search videos..."
                 filters={[{ value: "pending_payment", label: "Pending" }, { value: "live", label: "Live" }, { value: "rejected", label: "Rejected" }, { value: "draft", label: "Draft" }]} />
               {filteredVideos.length === 0 ? <p className="text-muted-foreground text-center py-12">No videos found.</p> : filteredVideos.map((v) => (
-                <div key={v.id} className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground truncate">{v.full_name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{v.description || "No description"} • {new Date(v.created_at).toLocaleDateString()}</p>
+                <div key={v.id} className="bg-card border border-border rounded-xl p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground truncate">{v.full_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{v.description || "No description"} • {new Date(v.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <Badge className={`rounded-full shrink-0 ${v.status === "live" ? "bg-primary/20 text-primary border-primary/30" : v.status === "rejected" ? "bg-destructive/20 text-destructive border-destructive/30" : "bg-muted text-muted-foreground border-border"}`}>{v.status}</Badge>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Badge className={`rounded-full ${v.status === "live" ? "bg-primary/20 text-primary border-primary/30" : v.status === "rejected" ? "bg-destructive/20 text-destructive border-destructive/30" : "bg-muted text-muted-foreground border-border"}`}>{v.status}</Badge>
-                    {v.video_url && <Button size="sm" variant="ghost" onClick={() => navigate(`/resume/${v.user_id}`)}><Eye className="h-4 w-4" /></Button>}
+                  <div className="flex gap-2 flex-wrap">
+                    {v.video_url && <Button size="sm" variant="outline" onClick={() => navigate(`/resume/${v.user_id}`)} className="rounded-full text-xs border-border text-muted-foreground"><Eye className="h-3.5 w-3.5 mr-1" />View</Button>}
                     {(v.status === "pending_payment" || v.status === "draft") && (
                       <>
-                        <Button size="sm" onClick={() => updateVideoStatus(v.id, "live")} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs">Approve</Button>
-                        <Button size="sm" variant="outline" onClick={() => updateVideoStatus(v.id, "rejected")} className="border-destructive/40 text-destructive hover:bg-destructive/10 rounded-full text-xs">Reject</Button>
+                        <Button size="sm" onClick={() => updateVideoStatus(v.id, "live")} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs">Approve</Button>
+                        <Button size="sm" variant="outline" onClick={() => updateVideoStatus(v.id, "rejected")} className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10 rounded-full text-xs">Reject</Button>
                       </>
                     )}
                   </div>
@@ -395,25 +402,24 @@ const AdminDashboard = () => {
               <SearchFilterBar search={requestSearch} setSearch={setRequestSearch} filter={requestFilter} setFilter={setRequestFilter} placeholder="Search requests..."
                 filters={[{ value: "pending", label: "Pending" }, { value: "approved", label: "Approved" }, { value: "rejected", label: "Rejected" }]} />
               {filteredRequests.length === 0 ? <p className="text-muted-foreground text-center py-12">No requests found.</p> : filteredRequests.map((r) => (
-                <div key={r.id} className="bg-card border border-border rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground">Scout: <span className="text-primary">{r.scout_name}</span> → Player: <span className="text-primary">{r.player_name}</span></p>
-                      <p className="text-xs text-muted-foreground">{r.notes || "No notes"} • {new Date(r.created_at).toLocaleDateString()}</p>
+                <div key={r.id} className="bg-card border border-border rounded-xl p-4 space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold text-sm text-foreground leading-tight">
+                        <span className="text-primary">{r.scout_name}</span> → <span className="text-primary">{r.player_name}</span>
+                      </p>
+                      <Badge className={`rounded-full shrink-0 text-xs ${r.status === "approved" ? "bg-primary/20 text-primary border-primary/30" : r.status === "rejected" ? "bg-destructive/20 text-destructive border-destructive/30" : "bg-muted text-muted-foreground border-border"}`}>{r.status}</Badge>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Badge className={`rounded-full ${r.status === "approved" ? "bg-primary/20 text-primary border-primary/30" : r.status === "rejected" ? "bg-destructive/20 text-destructive border-destructive/30" : "bg-muted text-muted-foreground border-border"}`}>{r.status}</Badge>
-                      {r.status === "pending" && (
-                        <>
-                          <Button size="sm" onClick={() => handleScoutRequest(r.id, "approved", r.player_id, r.player_name || "", r.scout_name || "", r.scout_id)} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs">Approve & Forward</Button>
-                          <Button size="sm" variant="outline" onClick={() => handleScoutRequest(r.id, "rejected", r.player_id, r.player_name || "", r.scout_name || "", r.scout_id)} className="border-destructive/40 text-destructive hover:bg-destructive/10 rounded-full text-xs">Reject</Button>
-                        </>
-                      )}
-                    </div>
+                    <p className="text-xs text-muted-foreground">{r.notes || "No notes"} • {new Date(r.created_at).toLocaleDateString()}</p>
                   </div>
-                  {/* Personalized feedback — sent to player, also noted to scout */}
+                  {r.status === "pending" && (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => handleScoutRequest(r.id, "approved", r.player_id, r.player_name || "", r.scout_name || "", r.scout_id)} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs">Approve & Forward</Button>
+                      <Button size="sm" variant="outline" onClick={() => handleScoutRequest(r.id, "rejected", r.player_id, r.player_name || "", r.scout_name || "", r.scout_id)} className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10 rounded-full text-xs">Reject</Button>
+                    </div>
+                  )}
                   <div className="flex gap-2">
-                    <Input placeholder={`Send feedback to ${r.player_name}...`} className="bg-secondary border-border text-sm rounded-xl" value={feedbackInputs[r.id] || ""} onChange={(e) => setFeedbackInputs((prev) => ({ ...prev, [r.id]: e.target.value }))} />
+                    <Input placeholder={`Feedback to ${r.player_name}...`} className="bg-secondary border-border text-sm rounded-xl" value={feedbackInputs[r.id] || ""} onChange={(e) => setFeedbackInputs((prev) => ({ ...prev, [r.id]: e.target.value }))} />
                     <Button size="sm" variant="outline" onClick={() => sendPersonalizedFeedback(r.id, r.scout_id, r.scout_name || "", r.player_id, r.player_name || "")} className="border-primary/40 text-primary shrink-0 rounded-full">
                       <Send className="h-4 w-4" />
                     </Button>
@@ -421,8 +427,6 @@ const AdminDashboard = () => {
                 </div>
               ))}
             </TabsContent>
-
-            {/* Safety Log */}
             <TabsContent value="safety" className="space-y-4">
               <div className="bg-accent/10 border border-accent/30 rounded-2xl p-4">
                 <div className="flex items-center gap-2">

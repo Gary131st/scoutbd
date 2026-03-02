@@ -1,14 +1,25 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Camera, Loader2, Save, MapPin, Calendar, Phone, Shield } from "lucide-react";
+import { User, Camera, Loader2, Save, MapPin, Calendar, Phone, Shield, Video, Trash2, AlertTriangle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+
+interface VideoRecord {
+  id: string;
+  status: string;
+  description: string | null;
+  position_tags: string[];
+  trait_tags: string[];
+  video_url: string | null;
+  created_at: string;
+}
 
 interface ProfileData {
   full_name: string;
@@ -22,7 +33,13 @@ interface ProfileData {
   guardian_contact: string;
 }
 
-const ProfileTab = () => {
+interface ProfileTabProps {
+  showVideos?: VideoRecord[];
+  onDeleteVideo?: (vid: VideoRecord) => void;
+  deletingVideoId?: string | null;
+}
+
+const ProfileTab = ({ showVideos, onDeleteVideo, deletingVideoId }: ProfileTabProps) => {
   const { user, role } = useAuth();
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -70,7 +87,6 @@ const ProfileTab = () => {
     if (!user) return;
     setSaving(true);
     try {
-      // Build update object carefully — only include fields that exist in the schema
       const updateData: Record<string, any> = {
         full_name: profile.full_name || "",
         bio: profile.bio || null,
@@ -81,7 +97,6 @@ const ProfileTab = () => {
         date_of_birth: profile.date_of_birth || null,
         guardian_contact: profile.guardian_contact || null,
       };
-      // Only add username if it's non-empty to avoid unique constraint on empty string
       if (profile.username?.trim()) {
         updateData.username = profile.username.trim();
       }
@@ -106,28 +121,26 @@ const ProfileTab = () => {
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-2xl mx-auto space-y-0">
-      {/* Instagram-style profile header */}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-2xl mx-auto space-y-4">
+      {/* Profile header card */}
       <div className="bg-card border border-border rounded-2xl overflow-hidden">
-        {/* Cover gradient */}
-        <div className="h-28 bg-gradient-to-r from-primary/20 via-primary/10 to-secondary relative" />
+        <div className="h-24 sm:h-28 bg-gradient-to-r from-primary/20 via-primary/10 to-secondary relative" />
 
-        <div className="px-6 pb-6">
-          {/* Avatar overlapping cover */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-12">
+        <div className="px-4 sm:px-6 pb-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-end gap-3 sm:gap-4 -mt-10 sm:-mt-12">
             <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-card border-4 border-card overflow-hidden shadow-lg">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-card border-4 border-card overflow-hidden shadow-lg">
                 {profile.avatar_url ? (
                   <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-secondary">
-                    <User className="h-10 w-10 text-muted-foreground" />
+                    <User className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
                   </div>
                 )}
               </div>
               <button
                 onClick={() => fileRef.current?.click()}
-                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors shadow-md"
+                className="absolute bottom-0 right-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors shadow-md"
               >
                 {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
               </button>
@@ -135,11 +148,11 @@ const ProfileTab = () => {
             </div>
 
             <div className="flex-1 text-center sm:text-left">
-              <h2 className="font-display text-2xl text-foreground">{profile.full_name || "Your Name"}</h2>
+              <h2 className="font-display text-xl sm:text-2xl text-foreground">{profile.full_name || "Your Name"}</h2>
               <p className="text-sm text-muted-foreground">@{profile.username || "username"}</p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-center">
               <Badge variant="outline" className="border-primary/30 text-primary rounded-full capitalize">
                 <Shield className="h-3 w-3 mr-1" /> {role}
               </Badge>
@@ -156,12 +169,10 @@ const ProfileTab = () => {
             </div>
           </div>
 
-          {/* Bio */}
           {!editing && profile.bio && (
             <p className="text-sm text-muted-foreground mt-4 max-w-md">{profile.bio}</p>
           )}
 
-          {/* Quick info pills */}
           {!editing && (
             <div className="flex flex-wrap gap-2 mt-3">
               {profile.sport && <Badge variant="outline" className="text-xs border-border text-muted-foreground rounded-full">{profile.sport}</Badge>}
@@ -183,7 +194,7 @@ const ProfileTab = () => {
 
       {/* Edit form */}
       {editing && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-2xl p-6 space-y-4 mt-4">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-2xl p-4 sm:p-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wide">Full Name</Label>
@@ -219,6 +230,60 @@ const ProfileTab = () => {
             <Input className="mt-1 bg-secondary border-border rounded-xl" placeholder="01XXXXXXXXX" value={profile.guardian_contact} onChange={(e) => setProfile((p) => ({ ...p, guardian_contact: e.target.value }))} />
           </div>
         </motion.div>
+      )}
+
+      {/* My Videos section — only shown when player passes videos */}
+      {showVideos && showVideos.length > 0 && (
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Video className="h-5 w-5 text-primary" />
+            <h2 className="font-display text-xl text-foreground">MY VIDEOS</h2>
+            <Badge variant="outline" className="text-xs border-border text-muted-foreground">{showVideos.length}</Badge>
+          </div>
+          <div className="space-y-2">
+            {showVideos.map((vid) => (
+              <div key={vid.id} className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-secondary overflow-hidden shrink-0">
+                  {vid.video_url ? (
+                    <video src={vid.video_url} className="w-full h-full object-cover" muted />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><Video className="h-4 w-4 text-muted-foreground" /></div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground truncate">{vid.description || "No description"}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(vid.created_at).toLocaleDateString()}</p>
+                </div>
+                <Badge className={`text-xs rounded-full shrink-0 ${vid.status === "live" ? "bg-primary/20 text-primary border-primary/30" : vid.status === "pending_payment" ? "bg-accent/20 text-accent border-accent/30" : "bg-muted text-muted-foreground border-border"}`}>
+                  {vid.status.replace("_", " ")}
+                </Badge>
+                {onDeleteVideo && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 h-8 w-8 p-0 shrink-0">
+                        {deletingVideoId === vid.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="bg-card border-border">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+                          <AlertTriangle className="h-5 w-5 text-destructive" /> Delete Video?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-muted-foreground">
+                          This will permanently delete this video. This cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-secondary border-border text-foreground">Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDeleteVideo(vid)} className="bg-destructive text-white hover:bg-destructive/90">Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </motion.div>
   );
