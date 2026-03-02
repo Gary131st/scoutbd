@@ -456,6 +456,22 @@ const PlayerDashboard = () => {
     doc.text("Scout BD — Digitizing Bangladesh Sports", w / 2, h - 12, { align: "center" });
 
     doc.save("ScoutBD_Invoice.pdf");
+  };
+
+  // Swipe gesture handling
+  const touchStartX = useRef<number | null>(null);
+  const tabs = ["upload", "explore", "profile"];
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) < 50) return;
+    const idx = tabs.indexOf(activeTab);
+    if (diff > 0 && idx < tabs.length - 1) setActiveTab(tabs[idx + 1]);
+    else if (diff < 0 && idx > 0) setActiveTab(tabs[idx - 1]);
+    touchStartX.current = null;
+  };
+
   if (authLoading) return <div className="min-h-screen flex items-center justify-center pt-16 pb-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   const liveVideos = allVideos.filter((v) => v.status === "live");
@@ -520,7 +536,7 @@ const PlayerDashboard = () => {
             </Dialog>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
             <TabsList className="bg-card border border-border w-full grid grid-cols-3">
               <TabsTrigger value="upload" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
                 <Upload className="h-3.5 w-3.5 sm:mr-1.5 shrink-0" /> <span className="hidden sm:inline">Upload Hub</span><span className="sm:hidden ml-1">Upload</span>
