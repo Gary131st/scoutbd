@@ -457,24 +457,24 @@ const PlayerDashboard = () => {
     doc.save("ScoutBD_Invoice.pdf");
   };
 
-  if (authLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (authLoading) return <div className="min-h-screen flex items-center justify-center pt-16 pb-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   const liveVideos = allVideos.filter((v) => v.status === "live");
   const pendingVideos = allVideos.filter((v) => v.status === "pending_payment");
 
   return (
-    <div className="min-h-screen pt-20 pb-16">
+    <div className="min-h-screen pt-16 pb-20 md:pb-8">
       <div className="container max-w-4xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-start justify-between mb-6">
+          <div className="flex items-start justify-between mb-5 pt-4">
             <div>
-              <h1 className="font-display text-4xl text-foreground mb-1">PLAYER DASHBOARD</h1>
-              <p className="text-muted-foreground">Manage your profile, upload videos, and explore other players</p>
+              <h1 className="font-display text-3xl sm:text-4xl text-foreground mb-0.5">PLAYER DASHBOARD</h1>
+              <p className="text-sm text-muted-foreground">Manage your profile, upload videos, and explore players</p>
             </div>
             <Dialog open={reportOpen} onOpenChange={setReportOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="border-destructive/40 text-destructive hover:bg-destructive/10 rounded-full text-xs shrink-0">
-                  <Flag className="h-3 w-3 mr-1" /> Report Scout
+                  <Flag className="h-3 w-3 mr-1" /> <span className="hidden xs:inline">Report Scout</span><span className="xs:hidden">Report</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-card border-border">
@@ -521,16 +521,16 @@ const PlayerDashboard = () => {
             </Dialog>
           </div>
 
-          <Tabs defaultValue="upload" className="space-y-6">
-            <TabsList className="bg-card border border-border">
-              <TabsTrigger value="upload" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Upload className="h-4 w-4 mr-1.5" /> Upload Hub
+          <Tabs defaultValue="upload" className="space-y-4 sm:space-y-6">
+            <TabsList className="bg-card border border-border w-full grid grid-cols-3">
+              <TabsTrigger value="upload" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
+                <Upload className="h-3.5 w-3.5 sm:mr-1.5 shrink-0" /> <span className="hidden sm:inline">Upload Hub</span><span className="sm:hidden ml-1">Upload</span>
               </TabsTrigger>
-              <TabsTrigger value="explore" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Eye className="h-4 w-4 mr-1.5" /> Explore Players
+              <TabsTrigger value="explore" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
+                <Eye className="h-3.5 w-3.5 sm:mr-1.5 shrink-0" /> <span className="hidden sm:inline">Explore Players</span><span className="sm:hidden ml-1">Explore</span>
               </TabsTrigger>
-              <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <User className="h-4 w-4 mr-1.5" /> My Profile
+              <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
+                <User className="h-3.5 w-3.5 sm:mr-1.5 shrink-0" /> <span className="hidden sm:inline">My Profile</span><span className="sm:hidden ml-1">Profile</span>
               </TabsTrigger>
             </TabsList>
 

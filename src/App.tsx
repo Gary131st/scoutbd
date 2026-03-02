@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import LoadingIntro from "@/components/LoadingIntro";
 import Index from "./pages/Index";
@@ -88,6 +89,7 @@ const App = () => {
             <AuthProvider>
               <Navbar />
               <AnimatedRoutes />
+              <MobileBottomNav />
             </AuthProvider>
           </BrowserRouter>
         )}

@@ -150,7 +150,7 @@ const Auth = () => {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-24 pb-12 px-4">
+      <div className="min-h-screen flex items-center justify-center pt-20 pb-24 px-4">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -187,10 +187,10 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center pt-24 pb-12 px-4">
+    <div className="min-h-screen flex items-start justify-center pt-20 pb-24 px-4 overflow-y-auto">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-4 group">
+        <div className="text-center mb-6">
+          <Link to="/" className="inline-flex items-center gap-2 mb-3 group">
             <Zap className="h-6 w-6 text-foreground" />
             <span className="font-display text-2xl text-foreground">SCOUT BD</span>
           </Link>
@@ -203,7 +203,7 @@ const Auth = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className="bg-card border border-border rounded-2xl p-6 shadow-2xl"
+          className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-2xl"
         >
           {!isLogin && (
             <>
