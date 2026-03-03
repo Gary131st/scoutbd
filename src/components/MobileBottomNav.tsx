@@ -1,20 +1,40 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Shield, BookOpen, HelpCircle, LayoutDashboard } from "lucide-react";
+import { Home, Shield, BookOpen, HelpCircle, Upload, Eye, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const MobileBottomNav = () => {
   const location = useLocation();
   const { user, role } = useAuth();
 
-  const dashboardPath = role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player";
+  // Player-specific bottom nav with deep-link tabs via hash
+  const isPlayer = user && role === "player";
+  const isScout = user && role === "scout";
+  const isAdmin = user && role === "admin";
 
-  const links = [
-    { label: "Home", path: "/", Icon: Home },
-    { label: "Safe", path: "/safe-scouting", Icon: Shield },
-    { label: "Mission", path: "/mission", Icon: BookOpen },
-    { label: "FAQ", path: "/faq", Icon: HelpCircle },
-    ...(user ? [{ label: "Dashboard", path: dashboardPath, Icon: LayoutDashboard }] : []),
-  ];
+  let links;
+  if (isPlayer) {
+    links = [
+      { label: "Home", path: "/", Icon: Home },
+      { label: "Upload", path: "/player#upload", Icon: Upload },
+      { label: "Explore", path: "/player#explore", Icon: Eye },
+      { label: "Profile", path: "/player#profile", Icon: User },
+    ];
+  } else if (isScout || isAdmin) {
+    const dashPath = isAdmin ? "/admin" : "/scout";
+    links = [
+      { label: "Home", path: "/", Icon: Home },
+      { label: "Safe", path: "/safe-scouting", Icon: Shield },
+      { label: "Mission", path: "/mission", Icon: BookOpen },
+      { label: "Dashboard", path: dashPath, Icon: User },
+    ];
+  } else {
+    links = [
+      { label: "Home", path: "/", Icon: Home },
+      { label: "Safe", path: "/safe-scouting", Icon: Shield },
+      { label: "Mission", path: "/mission", Icon: BookOpen },
+      { label: "FAQ", path: "/faq", Icon: HelpCircle },
+    ];
+  }
 
   // Hide on auth, reset-password pages
   const hidden = ["/auth", "/reset-password"].includes(location.pathname);
@@ -26,12 +46,15 @@ const MobileBottomNav = () => {
     >
       <div className="flex items-center justify-around h-16 px-1 safe-area-inset-bottom">
         {links.map(({ label, path, Icon }) => {
-          const active = location.pathname === path;
+          const [pathPart, hashPart] = path.split("#");
+          const active = hashPart
+            ? location.pathname === pathPart && location.hash === `#${hashPart}`
+            : location.pathname === path && !location.hash;
           return (
             <Link
               key={path}
               to={path}
-              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors ${
+              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors relative ${
                 active ? "text-foreground" : "text-muted-foreground"
               }`}
             >
