@@ -61,11 +61,26 @@ const PlayerDashboard = () => {
   const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
   const [showNewUpload, setShowNewUpload] = useState(false);
   const [uploadsHalted, setUploadsHalted] = useState(false);
-  const [activeTab, setActiveTab] = useState("upload");
+  const [activeTab, setActiveTab] = useState(() => {
+    const hash = window.location.hash.replace("#", "");
+    return ["upload", "explore", "profile"].includes(hash) ? hash : "upload";
+  });
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Sync tab with URL hash
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (["upload", "explore", "profile"].includes(hash)) setActiveTab(hash);
+  }, []);
+
+  // Update hash when tab changes
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    window.history.replaceState(null, "", `/player#${tab}`);
+  };
 
   const loadUserData = async (userId: string) => {
     const [profileRes, videosRes] = await Promise.all([
@@ -536,7 +551,7 @@ const PlayerDashboard = () => {
             </Dialog>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 sm:space-y-6" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
             <TabsList className="bg-card border border-border w-full grid grid-cols-3">
               <TabsTrigger value="upload" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
                 <Upload className="h-3.5 w-3.5 sm:mr-1.5 shrink-0" /> <span className="hidden sm:inline">Upload Hub</span><span className="sm:hidden ml-1">Upload</span>
