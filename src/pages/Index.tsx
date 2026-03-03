@@ -17,7 +17,7 @@ const Index = () => {
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* Hero */}
-      <section className="relative min-h-screen flex items-center overflow-hidden">
+      <section className="relative min-h-screen flex items-start overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroBg})` }} />
         <div className="absolute inset-0 bg-background/65" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
@@ -34,7 +34,7 @@ const Index = () => {
           className="hidden sm:block absolute bottom-1/3 right-1/3 w-40 h-40 rounded-full bg-primary/8 border border-primary/15 blur-lg pointer-events-none"
         />
 
-        <div className="container relative z-10 pt-20 pb-12 sm:pt-28 sm:pb-16" style={{ marginTop: "-10vh" }}>
+        <div className="container relative z-10 pt-20 pb-12 sm:pt-24 sm:pb-16">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
