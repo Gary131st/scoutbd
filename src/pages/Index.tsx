@@ -54,21 +54,28 @@ const Index = () => {
 
   useEffect(() => {
     const fetchScouts = async () => {
-      const { data } = await supabase
+      const { data: scoutData } = await supabase
         .from("scout_profiles")
-        .select("user_id, organization, profiles!inner(full_name, avatar_url)")
+        .select("user_id, organization")
         .eq("verification_status", "active")
         .limit(12);
-      if (data) {
-        setVerifiedScouts(
-          data.map((s: any) => ({
-            user_id: s.user_id,
-            organization: s.organization,
-            full_name: s.profiles?.full_name ?? "Scout",
-            avatar_url: s.profiles?.avatar_url ?? null,
-          }))
-        );
-      }
+      if (!scoutData || scoutData.length === 0) return;
+
+      const userIds = scoutData.map((s) => s.user_id);
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, avatar_url")
+        .in("user_id", userIds);
+
+      const profileMap = Object.fromEntries((profileData ?? []).map((p) => [p.user_id, p]));
+      setVerifiedScouts(
+        scoutData.map((s) => ({
+          user_id: s.user_id,
+          organization: s.organization,
+          full_name: profileMap[s.user_id]?.full_name ?? "Scout",
+          avatar_url: profileMap[s.user_id]?.avatar_url ?? null,
+        }))
+      );
     };
     fetchScouts();
   }, []);
