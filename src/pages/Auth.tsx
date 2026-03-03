@@ -112,7 +112,11 @@ const Auth = () => {
         }
 
         setEmailSent(true);
-        toast({ title: "Check your email! 📧", description: "Click the confirmation link to activate your account." });
+        if (selectedRole === "scout") {
+          toast({ title: "Account created! 📧", description: "Please confirm your email first." });
+        } else {
+          toast({ title: "Check your email! 📧", description: "Click the confirmation link to activate your account." });
+        }
       }
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Something went wrong", variant: "destructive" });
@@ -149,6 +153,7 @@ const Auth = () => {
   }, [user]);
 
   if (emailSent) {
+    const isScout = localStorage.getItem("pendingRole") === "scout";
     return (
       <div className="min-h-screen flex items-center justify-center pt-20 pb-24 px-4">
         <motion.div
@@ -171,9 +176,18 @@ const Auth = () => {
               We sent a confirmation link to{" "}
               <span className="text-foreground font-medium">{formEmail}</span>
             </p>
-            <p className="text-xs text-muted-foreground mt-3">
-              Click the link in the email to activate your account. You can close this tab.
-            </p>
+            {isScout ? (
+              <div className="mt-4 bg-primary/10 border border-primary/30 rounded-xl p-4">
+                <p className="text-sm text-foreground font-medium mb-1">🔍 Scout Account Under Review</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Your account is being reviewed by our Team for authentication purposes and you will be shortly notified via Email.
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-3">
+                Click the link in the email to activate your account. You can close this tab.
+              </p>
+            )}
           </div>
           <button
             onClick={() => { setEmailSent(false); setIsLogin(true); }}
