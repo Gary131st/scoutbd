@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, Users, Shield, Trophy, Zap } from "lucide-react";
+import { ArrowRight, Users, Shield, Trophy, Zap, Twitter, Facebook, Instagram, Youtube, Quote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const stats = [
@@ -11,8 +13,65 @@ const stats = [
   { label: "Talent Discovered", value: "340+", Icon: Trophy },
 ];
 
+const testimonials = [
+  {
+    quote: "Scout BD gave me the platform I never had. Within weeks of uploading my highlight reel, three clubs reached out.",
+    name: "Rafiqul Islam",
+    role: "Football Midfielder, Dhaka",
+    initial: "R",
+  },
+  {
+    quote: "As a scout, I can now discover talent from remote districts I'd never be able to visit in person. Revolutionary.",
+    name: "Kamal Hossain",
+    role: "Senior Scout, Bangladesh Football Federation",
+    initial: "K",
+  },
+  {
+    quote: "I was a nobody from Sylhet. Now I have a cricket contract. Scout BD changed my life completely.",
+    name: "Tanjim Ahmed",
+    role: "Cricket All-rounder, Sylhet",
+    initial: "T",
+  },
+];
+
+const socialLinks = [
+  { Icon: Facebook, label: "Facebook", href: "https://facebook.com/scoutbd", color: "hover:text-blue-500" },
+  { Icon: Twitter, label: "Twitter / X", href: "https://twitter.com/scoutbd", color: "hover:text-sky-400" },
+  { Icon: Instagram, label: "Instagram", href: "https://instagram.com/scoutbd", color: "hover:text-pink-500" },
+  { Icon: Youtube, label: "YouTube", href: "https://youtube.com/@scoutbd", color: "hover:text-red-500" },
+];
+
+type ScoutProfile = {
+  user_id: string;
+  full_name: string;
+  organization: string | null;
+  avatar_url: string | null;
+};
+
 const Index = () => {
   const { user, role } = useAuth();
+  const [verifiedScouts, setVerifiedScouts] = useState<ScoutProfile[]>([]);
+
+  useEffect(() => {
+    const fetchScouts = async () => {
+      const { data } = await supabase
+        .from("scout_profiles")
+        .select("user_id, organization, profiles!inner(full_name, avatar_url)")
+        .eq("verification_status", "active")
+        .limit(12);
+      if (data) {
+        setVerifiedScouts(
+          data.map((s: any) => ({
+            user_id: s.user_id,
+            organization: s.organization,
+            full_name: s.profiles?.full_name ?? "Scout",
+            avatar_url: s.profiles?.avatar_url ?? null,
+          }))
+        );
+      }
+    };
+    fetchScouts();
+  }, []);
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -22,7 +81,6 @@ const Index = () => {
         <div className="absolute inset-0 bg-background/65" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
 
-        {/* Floating orbs — hidden on mobile to avoid overflow */}
         <motion.div
           animate={{ y: [-20, 20, -20] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
@@ -67,7 +125,6 @@ const Index = () => {
             <div className="flex flex-col xs:flex-row gap-3 sm:gap-4 w-full xs:w-auto">
               {user && role ? (
                 <>
-                  {/* Mobile: go straight to Explore */}
                   <Link
                     to={role === "admin" ? "/admin" : role === "scout" ? "/scout/explore" : "/player/explore"}
                     className="w-full xs:w-auto md:hidden"
@@ -78,7 +135,6 @@ const Index = () => {
                       </Button>
                     </motion.div>
                   </Link>
-                  {/* Desktop: go to dashboard */}
                   <Link
                     to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"}
                     className="w-full xs:w-auto hidden md:block"
@@ -173,6 +229,134 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Testimonials — Desktop only */}
+      <section className="hidden lg:block py-20 border-t border-border">
+        <div className="container">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="font-display text-5xl text-foreground mb-3">WHAT THEY SAY</h2>
+            <p className="text-base text-muted-foreground max-w-lg mx-auto">Real stories from players and scouts who found their breakthrough</p>
+          </motion.div>
+          <div className="grid grid-cols-3 gap-8">
+            {testimonials.map((t, i) => (
+              <motion.div
+                key={t.name}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.15, duration: 0.5 }}
+                className="bg-card border border-border rounded-2xl p-8 flex flex-col gap-5 hover:border-primary/40 transition-all duration-300"
+              >
+                <Quote className="h-7 w-7 text-primary/40" />
+                <p className="text-sm text-muted-foreground leading-relaxed flex-1">"{t.quote}"</p>
+                <div className="flex items-center gap-3 pt-2 border-t border-border">
+                  <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center font-display text-primary text-lg">
+                    {t.initial}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Our Verified Scouts */}
+      <section className="py-12 sm:py-20 border-t border-border">
+        <div className="container">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-8 sm:mb-12"
+          >
+            <h2 className="font-display text-3xl sm:text-5xl text-foreground mb-2 sm:mb-3">OUR VERIFIED SCOUTS</h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-lg mx-auto">
+              These professionals are actively discovering talent across Bangladesh
+            </p>
+          </motion.div>
+
+          {verifiedScouts.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {verifiedScouts.map((scout, i) => (
+                <motion.div
+                  key={scout.user_id}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08, duration: 0.4 }}
+                  className="bg-card border border-border rounded-xl sm:rounded-2xl p-5 flex flex-col items-center text-center gap-3 hover:border-primary/40 transition-all duration-300"
+                >
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary/10 border border-primary/25 flex items-center justify-center overflow-hidden">
+                    {scout.avatar_url ? (
+                      <img src={scout.avatar_url} alt={scout.full_name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="font-display text-2xl text-primary">{scout.full_name.charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground leading-tight">{scout.full_name}</p>
+                    {scout.organization && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{scout.organization}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-primary/10 rounded-full px-2.5 py-1">
+                    <Shield className="h-3 w-3 text-primary" />
+                    <span className="text-xs text-primary font-medium">Verified</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground text-sm">No verified scouts listed yet.</p>
+          )}
+        </div>
+      </section>
+
+      {/* Social Media */}
+      <section className="py-12 sm:py-16 border-t border-border">
+        <div className="container">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-8"
+          >
+            <h2 className="font-display text-3xl sm:text-4xl text-foreground mb-2">FOLLOW THE JOURNEY</h2>
+            <p className="text-sm sm:text-base text-muted-foreground">Stay connected with Scout BD across all platforms</p>
+          </motion.div>
+          <div className="flex justify-center gap-6 sm:gap-8 flex-wrap">
+            {socialLinks.map(({ Icon, label, href, color }, i) => (
+              <motion.a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.35 }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                className={`flex flex-col items-center gap-2 text-muted-foreground transition-colors duration-200 ${color}`}
+              >
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-card border border-border flex items-center justify-center hover:border-primary/40 transition-all duration-200">
+                  <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
+                </div>
+                <span className="text-xs font-medium">{label}</span>
+              </motion.a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-12 sm:py-20 border-t border-border">
         <div className="container text-center">
@@ -193,7 +377,6 @@ const Index = () => {
           )}
           {user && role && (
             <>
-              {/* Mobile: Explore */}
               <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout/explore" : "/player/explore"} className="md:hidden inline-block">
                 <motion.div whileTap={{ scale: 0.95 }} className="inline-block">
                   <Button size="lg" className="bg-primary text-primary-foreground font-bold text-base px-8 glow">
@@ -201,7 +384,6 @@ const Index = () => {
                   </Button>
                 </motion.div>
               </Link>
-              {/* Desktop: Dashboard */}
               <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"} className="hidden md:inline-block">
                 <motion.div whileTap={{ scale: 0.95 }} className="inline-block">
                   <Button size="lg" className="bg-primary text-primary-foreground font-bold text-lg px-10 glow">
