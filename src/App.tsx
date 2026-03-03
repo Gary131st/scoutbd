@@ -18,6 +18,9 @@ import PlayerUpload from "./pages/PlayerUpload";
 import PlayerExplore from "./pages/PlayerExplore";
 import PlayerProfile from "./pages/PlayerProfile";
 import ScoutDashboard from "./pages/ScoutDashboard";
+import ScoutExplore from "./pages/ScoutExplore";
+import ScoutSelections from "./pages/ScoutSelections";
+import ScoutProfile from "./pages/ScoutProfile";
 import PlayerResume from "./pages/PlayerResume";
 import SafeScouting from "./pages/SafeScouting";
 import Mission from "./pages/Mission";
@@ -62,6 +65,9 @@ const AnimatedRoutes = () => {
           <Route path="/player/explore" element={<ProtectedRoute allowedRoles={["player"]}><PlayerExplore /></ProtectedRoute>} />
           <Route path="/player/profile" element={<ProtectedRoute allowedRoles={["player"]}><PlayerProfile /></ProtectedRoute>} />
           <Route path="/scout" element={<ProtectedRoute allowedRoles={["scout"]}><ScoutDashboard /></ProtectedRoute>} />
+          <Route path="/scout/explore" element={<ProtectedRoute allowedRoles={["scout"]}><ScoutExplore /></ProtectedRoute>} />
+          <Route path="/scout/selections" element={<ProtectedRoute allowedRoles={["scout"]}><ScoutSelections /></ProtectedRoute>} />
+          <Route path="/scout/profile" element={<ProtectedRoute allowedRoles={["scout"]}><ScoutProfile /></ProtectedRoute>} />
           <Route path="/resume/:userId" element={<PlayerResume />} />
           <Route path="/safe-scouting" element={<SafeScouting />} />
           <Route path="/mission" element={<Mission />} />

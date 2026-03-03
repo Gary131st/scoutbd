@@ -66,13 +66,30 @@ const Index = () => {
 
             <div className="flex flex-col xs:flex-row gap-3 sm:gap-4 w-full xs:w-auto">
               {user && role ? (
-                <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"} className="w-full xs:w-auto">
-                  <motion.div whileTap={{ scale: 0.97 }}>
-                    <Button size="lg" className="w-full xs:w-auto bg-primary text-primary-foreground font-bold text-base sm:text-lg px-6 sm:px-8 glow hover:bg-primary/90 transition-all">
-                      Go to Dashboard <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-                    </Button>
-                  </motion.div>
-                </Link>
+                <>
+                  {/* Mobile: go straight to Explore */}
+                  <Link
+                    to={role === "admin" ? "/admin" : role === "scout" ? "/scout/explore" : "/player/explore"}
+                    className="w-full xs:w-auto md:hidden"
+                  >
+                    <motion.div whileTap={{ scale: 0.97 }}>
+                      <Button size="lg" className="w-full bg-primary text-primary-foreground font-bold text-base px-6 glow hover:bg-primary/90 transition-all">
+                        Explore <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </motion.div>
+                  </Link>
+                  {/* Desktop: go to dashboard */}
+                  <Link
+                    to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"}
+                    className="w-full xs:w-auto hidden md:block"
+                  >
+                    <motion.div whileTap={{ scale: 0.97 }}>
+                      <Button size="lg" className="w-full xs:w-auto bg-primary text-primary-foreground font-bold text-lg px-8 glow hover:bg-primary/90 transition-all">
+                        Go to Dashboard <ArrowRight className="ml-2 h-5 w-5" />
+                      </Button>
+                    </motion.div>
+                  </Link>
+                </>
               ) : (
                 <>
                   <Link to="/auth" className="w-full xs:w-auto">
@@ -175,13 +192,24 @@ const Index = () => {
             </Link>
           )}
           {user && role && (
-            <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"}>
-              <motion.div whileTap={{ scale: 0.95 }} className="inline-block">
-                <Button size="lg" className="bg-primary text-primary-foreground font-bold text-base sm:text-lg px-8 sm:px-10 glow">
-                  Go to Dashboard <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-              </motion.div>
-            </Link>
+            <>
+              {/* Mobile: Explore */}
+              <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout/explore" : "/player/explore"} className="md:hidden inline-block">
+                <motion.div whileTap={{ scale: 0.95 }} className="inline-block">
+                  <Button size="lg" className="bg-primary text-primary-foreground font-bold text-base px-8 glow">
+                    Explore <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </motion.div>
+              </Link>
+              {/* Desktop: Dashboard */}
+              <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"} className="hidden md:inline-block">
+                <motion.div whileTap={{ scale: 0.95 }} className="inline-block">
+                  <Button size="lg" className="bg-primary text-primary-foreground font-bold text-lg px-10 glow">
+                    Go to Dashboard <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </motion.div>
+              </Link>
+            </>
           )}
         </div>
       </section>

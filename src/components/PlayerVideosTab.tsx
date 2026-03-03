@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Play, Loader2, Heart, Eye, Search } from "lucide-react";
+import { Play, Loader2, Eye, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,7 +20,7 @@ interface PlayerVideo {
 }
 
 const PlayerVideosTab = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const navigate = useNavigate();
   const [videos, setVideos] = useState<PlayerVideo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,30 +36,47 @@ const PlayerVideosTab = () => {
 
       if (!vids || vids.length === 0) { setVideos([]); setLoading(false); return; }
 
-      const otherVids = vids.filter((v) => v.user_id !== user?.id);
-      const userIds = [...new Set(otherVids.map((v) => v.user_id))];
+      // Exclude own videos only for players
+      const filtered = role === "player" ? vids.filter((v) => v.user_id !== user?.id) : vids;
+      const userIds = [...new Set(filtered.map((v) => v.user_id))];
 
+      // Always fetch fresh profile data so name/avatar changes propagate immediately
       let profileMap = new Map<string, { full_name: string; sport: string; avatar_url: string }>();
       if (userIds.length > 0) {
-        const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, sport, avatar_url").in("user_id", userIds);
-        (profiles || []).forEach((p) => profileMap.set(p.user_id, { full_name: p.full_name, sport: p.sport || "football", avatar_url: p.avatar_url || "" }));
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, sport, avatar_url")
+          .in("user_id", userIds);
+        (profiles || []).forEach((p) =>
+          profileMap.set(p.user_id, {
+            full_name: p.full_name,
+            sport: p.sport || "football",
+            avatar_url: p.avatar_url || "",
+          })
+        );
       }
 
-      setVideos(otherVids.map((v) => ({
-        ...v,
-        position_tags: v.position_tags || [],
-        trait_tags: v.trait_tags || [],
-        full_name: profileMap.get(v.user_id)?.full_name || "Unknown",
-        sport: profileMap.get(v.user_id)?.sport || "football",
-        avatar_url: profileMap.get(v.user_id)?.avatar_url || "",
-      })));
+      setVideos(
+        filtered
+          .filter((v) => profileMap.has(v.user_id))
+          .map((v) => ({
+            ...v,
+            position_tags: v.position_tags || [],
+            trait_tags: v.trait_tags || [],
+            full_name: profileMap.get(v.user_id)?.full_name || "Unknown",
+            sport: profileMap.get(v.user_id)?.sport || "football",
+            avatar_url: profileMap.get(v.user_id)?.avatar_url || "",
+          }))
+          .filter((v) => v.full_name && v.full_name !== "Unknown")
+      );
       setLoading(false);
     };
     fetchVideos();
-  }, [user]);
+  }, [user, role]);
 
-  const filtered = videos.filter((v) =>
-    !search || v.full_name.toLowerCase().includes(search.toLowerCase()) ||
+  const filteredVideos = videos.filter((v) =>
+    !search ||
+    v.full_name.toLowerCase().includes(search.toLowerCase()) ||
     v.position_tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))
   );
 
@@ -67,7 +84,6 @@ const PlayerVideosTab = () => {
 
   return (
     <div className="space-y-4">
-      {/* Search bar - Instagram style */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
@@ -78,11 +94,11 @@ const PlayerVideosTab = () => {
         />
       </div>
 
-      {filtered.length === 0 ? (
+      {filteredVideos.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">No player videos available yet.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
-          {filtered.map((v, i) => (
+          {filteredVideos.map((v, i) => (
             <motion.div
               key={v.id}
               initial={{ opacity: 0, scale: 0.95 }}
@@ -98,13 +114,11 @@ const PlayerVideosTab = () => {
                   <Play className="h-8 w-8 text-muted-foreground" />
                 </div>
               )}
-              {/* Hover overlay */}
               <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
                 <div className="flex items-center gap-1 text-foreground font-semibold text-sm">
                   <Eye className="h-4 w-4" /> View
                 </div>
               </div>
-              {/* Sport badge */}
               <Badge className="absolute top-2 left-2 bg-background/70 text-foreground border-0 text-[10px] backdrop-blur-sm">
                 {v.sport}
               </Badge>
@@ -113,7 +127,7 @@ const PlayerVideosTab = () => {
         </div>
       )}
 
-      {/* Video detail modal - Instagram style */}
+      {/* Video detail modal */}
       <AnimatePresence>
         {selectedVideo && (
           <motion.div
@@ -130,7 +144,6 @@ const PlayerVideosTab = () => {
               className="bg-card border border-border rounded-2xl overflow-hidden max-w-lg w-full max-h-[90vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
               <div className="flex items-center gap-3 p-4 border-b border-border">
                 <div className="w-9 h-9 rounded-full bg-secondary overflow-hidden border border-border">
                   {selectedVideo.avatar_url ? (
@@ -153,7 +166,6 @@ const PlayerVideosTab = () => {
                 </button>
               </div>
 
-              {/* Video */}
               <div className="aspect-video bg-secondary">
                 {selectedVideo.video_url ? (
                   <video src={selectedVideo.video_url} className="w-full h-full object-cover" controls autoPlay muted />
@@ -164,16 +176,13 @@ const PlayerVideosTab = () => {
                 )}
               </div>
 
-              {/* Details */}
               <div className="p-4 space-y-3 overflow-y-auto">
-                <div className="flex items-center gap-3">
-                  <button className="hover:scale-110 transition-transform">
-                    <Heart className="h-6 w-6 text-foreground" />
-                  </button>
-                  <button onClick={() => navigate(`/resume/${selectedVideo.user_id}`)} className="text-sm text-primary font-medium hover:underline">
-                    View Full Profile →
-                  </button>
-                </div>
+                <button
+                  onClick={() => navigate(`/resume/${selectedVideo.user_id}`)}
+                  className="text-sm text-primary font-medium hover:underline"
+                >
+                  View Full Profile →
+                </button>
 
                 {selectedVideo.description && (
                   <p className="text-sm text-muted-foreground">
