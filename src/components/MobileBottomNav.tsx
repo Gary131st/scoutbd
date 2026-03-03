@@ -15,9 +15,9 @@ const MobileBottomNav = () => {
   if (isPlayer) {
     links = [
       { label: "Home", path: "/", Icon: Home },
-      { label: "Upload", path: "/player#upload", Icon: Upload },
-      { label: "Explore", path: "/player#explore", Icon: Eye },
-      { label: "Profile", path: "/player#profile", Icon: User },
+      { label: "Upload", path: "/player/upload", Icon: Upload },
+      { label: "Explore", path: "/player/explore", Icon: Eye },
+      { label: "Profile", path: "/player/profile", Icon: User },
     ];
   } else if (isScout || isAdmin) {
     const dashPath = isAdmin ? "/admin" : "/scout";
@@ -46,10 +46,7 @@ const MobileBottomNav = () => {
     >
       <div className="flex items-center justify-around h-16 px-1 safe-area-inset-bottom">
         {links.map(({ label, path, Icon }) => {
-          const [pathPart, hashPart] = path.split("#");
-          const active = hashPart
-            ? location.pathname === pathPart && location.hash === `#${hashPart}`
-            : location.pathname === path && !location.hash;
+          const active = location.pathname === path;
           return (
             <Link
               key={path}

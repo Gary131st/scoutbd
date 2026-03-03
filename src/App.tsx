@@ -14,6 +14,9 @@ import LoadingIntro from "@/components/LoadingIntro";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import PlayerDashboard from "./pages/PlayerDashboard";
+import PlayerUpload from "./pages/PlayerUpload";
+import PlayerExplore from "./pages/PlayerExplore";
+import PlayerProfile from "./pages/PlayerProfile";
 import ScoutDashboard from "./pages/ScoutDashboard";
 import PlayerResume from "./pages/PlayerResume";
 import SafeScouting from "./pages/SafeScouting";
@@ -55,6 +58,9 @@ const AnimatedRoutes = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/player" element={<ProtectedRoute allowedRoles={["player"]}><PlayerDashboard /></ProtectedRoute>} />
+          <Route path="/player/upload" element={<ProtectedRoute allowedRoles={["player"]}><PlayerUpload /></ProtectedRoute>} />
+          <Route path="/player/explore" element={<ProtectedRoute allowedRoles={["player"]}><PlayerExplore /></ProtectedRoute>} />
+          <Route path="/player/profile" element={<ProtectedRoute allowedRoles={["player"]}><PlayerProfile /></ProtectedRoute>} />
           <Route path="/scout" element={<ProtectedRoute allowedRoles={["scout"]}><ScoutDashboard /></ProtectedRoute>} />
           <Route path="/resume/:userId" element={<PlayerResume />} />
           <Route path="/safe-scouting" element={<SafeScouting />} />
