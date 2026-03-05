@@ -39,7 +39,7 @@ const NotificationBell = () => {
   const [open, setOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
   const fetchNotifications = async () => {
     if (!user) return;
@@ -79,13 +79,28 @@ const NotificationBell = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
 
-  // Update dropdown position when opening
+  // Calculate dropdown position to avoid going off-screen
   useEffect(() => {
     if (open && bellRef.current) {
       const rect = bellRef.current.getBoundingClientRect();
-      setDropdownPos({
-        top: rect.bottom + window.scrollY + 8,
-        right: window.innerWidth - rect.right,
+      const dropdownWidth = Math.min(384, window.innerWidth - 16); // w-96 = 384px, 16px padding
+      const top = rect.bottom + window.scrollY + 8;
+
+      // Try to align right edge with bell, but clamp to viewport
+      let right = window.innerWidth - rect.right;
+      // Ensure left edge doesn't go off-screen
+      const leftEdge = window.innerWidth - right - dropdownWidth;
+      if (leftEdge < 8) {
+        right = window.innerWidth - dropdownWidth - 8;
+      }
+
+      setDropdownStyle({
+        position: "fixed",
+        top: rect.bottom + 8,
+        right: Math.max(8, window.innerWidth - rect.right),
+        width: dropdownWidth,
+        zIndex: 9999,
+        maxWidth: "calc(100vw - 16px)",
       });
     }
   }, [open]);
@@ -125,8 +140,8 @@ const NotificationBell = () => {
   const dropdown = open ? ReactDOM.createPortal(
     <div
       ref={dropdownRef}
-      style={{ position: "absolute", top: dropdownPos.top, right: dropdownPos.right, zIndex: 9999 }}
-      className="w-80 sm:w-96 bg-card border border-border rounded-2xl shadow-2xl max-h-[75vh] overflow-hidden flex flex-col"
+      style={dropdownStyle}
+      className="bg-card border border-border rounded-2xl shadow-2xl max-h-[75vh] overflow-hidden flex flex-col"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
