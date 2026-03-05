@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, Users, Shield, Trophy, Zap, Twitter, Facebook, Instagram, Youtube, Quote } from "lucide-react";
+import { ArrowRight, Users, Shield, Trophy, Zap, Twitter, Facebook, Instagram, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import heroBg from "@/assets/hero-bg.jpg";
+import BangladeshMapTestimonials from "@/components/BangladeshMapTestimonials";
 
 const stats = [
   { label: "Players Registered", value: "2,500+", Icon: Users },
@@ -236,44 +237,9 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Testimonials — Desktop only */}
-      <section className="hidden lg:block py-20 border-t border-border">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h2 className="font-display text-5xl text-foreground mb-3">WHAT THEY SAY</h2>
-            <p className="text-base text-muted-foreground max-w-lg mx-auto">Real stories from players and scouts who found their breakthrough</p>
-          </motion.div>
-          <div className="grid grid-cols-3 gap-8">
-            {testimonials.map((t, i) => (
-              <motion.div
-                key={t.name}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15, duration: 0.5 }}
-                className="bg-card border border-border rounded-2xl p-8 flex flex-col gap-5 hover:border-primary/40 transition-all duration-300"
-              >
-                <Quote className="h-7 w-7 text-primary/40" />
-                <p className="text-sm text-muted-foreground leading-relaxed flex-1">"{t.quote}"</p>
-                <div className="flex items-center gap-3 pt-2 border-t border-border">
-                  <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center font-display text-primary text-lg">
-                    {t.initial}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Bangladesh Map Testimonials */}
+      <BangladeshMapTestimonials />
+
 
       {/* Our Verified Scouts */}
       <section className="py-12 sm:py-20 border-t border-border">
