@@ -65,7 +65,15 @@ const Auth = () => {
 
   useEffect(() => {
     if (user && userRole) {
-      const dest = userRole === "admin" ? "/admin" : userRole === "scout" ? "/scout" : "/player";
+      const isMobile = window.innerWidth < 768;
+      let dest: string;
+      if (userRole === "admin") {
+        dest = "/admin";
+      } else if (userRole === "scout") {
+        dest = isMobile ? "/scout/profile" : "/scout";
+      } else {
+        dest = isMobile ? "/player/profile" : "/player";
+      }
       navigate(dest, { replace: true });
     }
   }, [user, userRole, navigate]);
