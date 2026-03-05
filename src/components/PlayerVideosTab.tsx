@@ -110,7 +110,7 @@ const ReelItem = ({
         {/* Scout select button */}
         {isScout && (
           <div className="flex flex-col items-center gap-1">
-            <ScoutSelectPlayer playerId={video.user_id} playerName={video.full_name} compact />
+            <ScoutSelectPlayer playerId={video.user_id} playerName={video.full_name} />
           </div>
         )}
       </div>
