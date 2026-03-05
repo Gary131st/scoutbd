@@ -79,28 +79,26 @@ const NotificationBell = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
 
-  // Calculate dropdown position to avoid going off-screen
+  // Calculate dropdown position — fixed to viewport, always on-screen
   useEffect(() => {
     if (open && bellRef.current) {
       const rect = bellRef.current.getBoundingClientRect();
-      const dropdownWidth = Math.min(384, window.innerWidth - 16); // w-96 = 384px, 16px padding
-      const top = rect.bottom + window.scrollY + 8;
+      const dropdownWidth = Math.min(384, window.innerWidth - 16);
 
-      // Try to align right edge with bell, but clamp to viewport
-      let right = window.innerWidth - rect.right;
-      // Ensure left edge doesn't go off-screen
-      const leftEdge = window.innerWidth - right - dropdownWidth;
+      // Align right edge with bell, but never let left edge go off-screen
+      let rightEdgeFromViewportRight = window.innerWidth - rect.right;
+      const leftEdge = rect.right - dropdownWidth;
       if (leftEdge < 8) {
-        right = window.innerWidth - dropdownWidth - 8;
+        rightEdgeFromViewportRight = window.innerWidth - dropdownWidth - 8;
       }
 
       setDropdownStyle({
         position: "fixed",
         top: rect.bottom + 8,
-        right: Math.max(8, window.innerWidth - rect.right),
+        right: Math.max(8, rightEdgeFromViewportRight),
         width: dropdownWidth,
-        zIndex: 9999,
         maxWidth: "calc(100vw - 16px)",
+        zIndex: 9999,
       });
     }
   }, [open]);
