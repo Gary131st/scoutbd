@@ -4,11 +4,12 @@ import { X, MapPin, Quote } from "lucide-react";
 import playerRafiq from "@/assets/player-rafiq.jpg";
 import playerTanjim from "@/assets/player-tanjim.jpg";
 import playerNusrat from "@/assets/player-nusrat.jpg";
+import bangladeshMap from "@/assets/bangladesh-divisions-map.png";
 
 type PlayerPin = {
   id: string;
-  x: number; // % relative to SVG viewBox width (0-100)
-  y: number; // % relative to SVG viewBox height (0-100)
+  x: number; // % of image width
+  y: number; // % of image height
   district: string;
   name: string;
   sport: string;
@@ -19,11 +20,20 @@ type PlayerPin = {
   defaultOpen?: boolean;
 };
 
-// Coordinates mapped to Bangladesh SVG viewBox (0 0 500 600)
+// Coordinates carefully measured from the uploaded map image
+// Image origin is top-left. Divisions (approx centre of each region):
+// Rangpur  — top-left bulge
+// Rajshahi — left-centre
+// Mymensingh — top-centre
+// Sylhet   — top-right
+// Dhaka    — centre
+// Khulna   — bottom-left
+// Barisal  — bottom-centre
+// Chittagong — right
 const players: PlayerPin[] = [
   {
     id: "rafiq",
-    x: 49, y: 55,
+    x: 46, y: 52,
     district: "Dhaka", name: "Rafiqul Islam", sport: "Football", position: "Midfielder",
     issue: "No platform to showcase talent outside his locality. Spent 3 years unnoticed.",
     story: "Within weeks of uploading his highlight reel on Scout BD, three clubs reached out. He now plays for a Dhaka Premier Division club.",
@@ -31,7 +41,7 @@ const players: PlayerPin[] = [
   },
   {
     id: "tanjim",
-    x: 78, y: 38,
+    x: 72, y: 28,
     district: "Sylhet", name: "Tanjim Ahmed", sport: "Cricket", position: "All-rounder",
     issue: "Playing in remote Sylhet with zero scouting infrastructure. His talent was invisible.",
     story: "Scout BD connected him to a BPL franchise scout. He now holds a regional cricket contract and represents Sylhet in the National Championship.",
@@ -39,50 +49,50 @@ const players: PlayerPin[] = [
   },
   {
     id: "nusrat",
-    x: 20, y: 72,
+    x: 22, y: 68,
     district: "Khulna", name: "Nusrat Jahan", sport: "Football", position: "Forward",
     issue: "Female players in Khulna had no visibility — no scouts ever visited the district.",
     story: "After uploading her skills video, she received an invite to the Bangladesh Women's U-20 trials. She made the squad.",
     image: playerNusrat, defaultOpen: true,
   },
-  { id: "p4", x: 26, y: 33, district: "Rajshahi", name: "Arif Hossain", sport: "Football", position: "Goalkeeper", issue: "Limited access to professional coaching.", story: "Now training with Rajshahi FC youth academy after being spotted on Scout BD.", image: playerRafiq },
-  { id: "p5", x: 44, y: 82, district: "Barisal", name: "Sumon Dey", sport: "Cricket", position: "Fast Bowler", issue: "No way to reach metropolitan scouts from coastal Barisal.", story: "Secured a trial with a Dhaka-based cricket academy through Scout BD.", image: playerTanjim },
-  { id: "p6", x: 52, y: 28, district: "Mymensingh", name: "Karim Uddin", sport: "Football", position: "Defender", issue: "Talented but invisible due to lack of local scouting.", story: "Joined Dhaka Abahani youth team after being discovered on Scout BD.", image: playerNusrat },
-  { id: "p7", x: 30, y: 14, district: "Rangpur", name: "Belal Khan", sport: "Cricket", position: "Spinner", issue: "Northern districts ignored by big club scouts.", story: "Offered contract by Rangpur Riders academy after highlight reel went viral.", image: playerRafiq },
-  { id: "p8", x: 62, y: 64, district: "Comilla", name: "Rony Mia", sport: "Football", position: "Winger", issue: "Played street football with no professional pathway.", story: "Discovered by a scout from Chittagong Abahani and offered a trial.", image: playerTanjim },
-  { id: "p9", x: 74, y: 76, district: "Chittagong", name: "Sadia Islam", sport: "Football", position: "Midfielder", issue: "Women's football completely unscouted in Chittagong.", story: "Selected for national women's development camp after Scout BD profile.", image: playerNusrat },
-  { id: "p10", x: 57, y: 47, district: "Noakhali", name: "Imran Hossain", sport: "Football", position: "Striker", issue: "No football clubs operating in his upazilas.", story: "Now on trial with Chittagong Kings after being spotted on Scout BD.", image: playerTanjim },
-  { id: "p11", x: 38, y: 76, district: "Faridpur", name: "Mitu Akter", sport: "Football", position: "Forward", issue: "Female talent completely overlooked in rural areas.", story: "Invited to attend Bangladesh Football Federation's women's development program.", image: playerNusrat },
+  { id: "p4", x: 28, y: 36, district: "Rajshahi", name: "Arif Hossain", sport: "Football", position: "Goalkeeper", issue: "Limited access to professional coaching.", story: "Now training with Rajshahi FC youth academy after being spotted on Scout BD.", image: playerRafiq },
+  { id: "p5", x: 44, y: 78, district: "Barisal", name: "Sumon Dey", sport: "Cricket", position: "Fast Bowler", issue: "No way to reach metropolitan scouts from coastal Barisal.", story: "Secured a trial with a Dhaka-based cricket academy through Scout BD.", image: playerTanjim },
+  { id: "p6", x: 50, y: 30, district: "Mymensingh", name: "Karim Uddin", sport: "Football", position: "Defender", issue: "Talented but invisible due to lack of local scouting.", story: "Joined Dhaka Abahani youth team after being discovered on Scout BD.", image: playerNusrat },
+  { id: "p7", x: 24, y: 16, district: "Rangpur", name: "Belal Khan", sport: "Cricket", position: "Spinner", issue: "Northern districts ignored by big club scouts.", story: "Offered contract by Rangpur Riders academy after highlight reel went viral.", image: playerRafiq },
+  { id: "p8", x: 60, y: 58, district: "Comilla", name: "Rony Mia", sport: "Football", position: "Winger", issue: "Played street football with no professional pathway.", story: "Discovered by a scout from Chittagong Abahani and offered a trial.", image: playerTanjim },
+  { id: "p9", x: 72, y: 68, district: "Chittagong", name: "Sadia Islam", sport: "Football", position: "Midfielder", issue: "Women's football completely unscouted in Chittagong.", story: "Selected for national women's development camp after Scout BD profile.", image: playerNusrat },
 ];
 
-// Uniform SVG pin — identical shape for every pin, colour changes only
+// District label positions (visual centre of each division)
+const districtLabels = [
+  { name: "Rangpur",    x: 24, y: 11 },
+  { name: "Rajshahi",   x: 24, y: 41 },
+  { name: "Mymensingh", x: 50, y: 24 },
+  { name: "Sylhet",     x: 73, y: 22 },
+  { name: "Dhaka",      x: 46, y: 46 },
+  { name: "Khulna",     x: 20, y: 63 },
+  { name: "Barisal",    x: 44, y: 73 },
+  { name: "Chittagong", x: 72, y: 62 },
+];
+
 function Pin({ active, open }: { active: boolean; open: boolean }) {
-  const fill = open
-    ? "hsl(var(--primary))"
-    : "hsl(var(--foreground)/0.45)";
-  const dot = open
-    ? "hsl(var(--primary-foreground))"
-    : "hsl(var(--background)/0.9)";
-  const glow = active
-    ? "drop-shadow(0 0 6px hsl(var(--primary)))"
+  const fill = open ? "hsl(var(--primary))" : "hsl(var(--foreground)/0.5)";
+  const dot  = open ? "hsl(var(--primary-foreground))" : "hsl(var(--background)/0.85)";
+  const shadow = active
+    ? "drop-shadow(0 0 7px hsl(var(--primary))) drop-shadow(0 2px 4px rgba(0,0,0,0.8))"
     : open
-    ? "drop-shadow(0 0 4px hsl(var(--primary)/0.6))"
-    : "drop-shadow(0 2px 3px rgba(0,0,0,0.7))";
+    ? "drop-shadow(0 0 4px hsl(var(--primary)/0.7)) drop-shadow(0 2px 4px rgba(0,0,0,0.7))"
+    : "drop-shadow(0 2px 4px rgba(0,0,0,0.8))";
 
   return (
-    <svg
-      viewBox="0 0 24 32"
-      width="22"
-      height="29"
-      style={{ filter: glow, display: "block" }}
-    >
+    <svg viewBox="0 0 24 32" width="20" height="27" style={{ filter: shadow, display: "block" }}>
       <path
         d="M12 1C7.58 1 4 4.58 4 9c0 6.5 8 22 8 22s8-15.5 8-22C20 4.58 16.42 1 12 1z"
         fill={fill}
-        stroke="rgba(255,255,255,0.15)"
-        strokeWidth="0.6"
+        stroke="rgba(255,255,255,0.18)"
+        strokeWidth="0.7"
       />
-      <circle cx="12" cy="9" r="3.2" fill={dot} />
+      <circle cx="12" cy="9" r="3" fill={dot} />
     </svg>
   );
 }
@@ -95,7 +105,7 @@ export default function BangladeshMapTestimonials() {
   useEffect(() => {
     if (!mapVisible) return;
     players.filter(p => p.defaultOpen).forEach((p, i) => {
-      setTimeout(() => setOpenPins(prev => new Set([...prev, p.id])), 500 + i * 250);
+      setTimeout(() => setOpenPins(prev => new Set([...prev, p.id])), 500 + i * 280);
     });
   }, [mapVisible]);
 
@@ -135,106 +145,57 @@ export default function BangladeshMapTestimonials() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
             onAnimationComplete={() => setMapVisible(true)}
-            className="relative w-full max-w-xl lg:max-w-2xl flex-shrink-0 mx-auto lg:mx-0"
+            className="relative w-full max-w-lg lg:max-w-xl flex-shrink-0 mx-auto lg:mx-0"
           >
-            {/* SVG map with pins overlay */}
-            <div className="relative w-full">
-              {/* Bangladesh divisions SVG — transparent background, white/grey outlines */}
-              <svg
-                viewBox="0 0 500 580"
-                className="w-full h-auto"
-                style={{ overflow: "visible" }}
-                aria-hidden="true"
-              >
-                <defs>
-                  <filter id="divisionGlow">
-                    <feGaussianBlur stdDeviation="1.5" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                  </filter>
-                </defs>
+            {/* Map image — invert makes white bg → black, black fills → white/grey outlines */}
+            <div className="relative w-full select-none">
+              <img
+                src={bangladeshMap}
+                alt="Bangladesh divisions map"
+                className="w-full h-auto pointer-events-none"
+                style={{
+                  filter: "invert(1) brightness(0.78) contrast(1.15)",
+                  mixBlendMode: "normal",
+                }}
+                draggable={false}
+              />
 
-                {/* ── Division paths — Bangladesh 8 divisions ── */}
-                {/* Rangpur */}
-                <path d="M115,20 L200,18 L215,30 L220,55 L200,70 L175,80 L155,75 L130,65 L110,50 Z"
-                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
-                {/* Rajshahi */}
-                <path d="M80,80 L155,75 L175,80 L180,105 L165,125 L140,130 L100,120 L75,105 Z"
-                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
-                {/* Mymensingh */}
-                <path d="M200,70 L270,65 L285,85 L275,115 L245,125 L215,120 L200,105 L195,85 Z"
-                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
-                {/* Sylhet */}
-                <path d="M270,65 L345,55 L370,75 L365,110 L340,130 L305,135 L285,115 L285,85 Z"
-                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
-                {/* Dhaka */}
-                <path d="M180,105 L245,125 L275,115 L285,115 L295,145 L275,175 L245,185 L210,175 L185,160 L175,135 Z"
-                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
-                {/* Comilla / Chittagong Hill Tracts area (East) */}
-                <path d="M285,115 L305,135 L340,130 L360,160 L350,200 L320,230 L290,250 L275,225 L265,195 L275,175 L295,145 Z"
-                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
-                {/* Chittagong */}
-                <path d="M320,230 L360,210 L390,235 L395,275 L370,310 L340,320 L310,295 L295,265 L290,250 Z"
-                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
-                {/* Khulna */}
-                <path d="M75,160 L140,155 L175,155 L185,160 L210,175 L205,215 L185,245 L155,260 L115,255 L80,240 L65,210 L70,180 Z"
-                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
-                {/* Barisal */}
-                <path d="M155,260 L185,245 L210,245 L245,185 L275,175 L265,215 L250,250 L230,275 L205,285 L175,285 L150,275 Z"
-                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
-
-                {/* Outer border of Bangladesh — bold white outline */}
-                <path
-                  d="M115,20 L200,18 L215,30 L270,65 L345,55 L370,75 L365,110 L360,160 L390,235 L395,275 L370,310 L340,320 L310,295 L290,250 L230,275 L205,285 L175,285 L150,275 L115,255 L80,240 L65,210 L70,180 L75,105 L80,80 L115,20 Z"
-                  fill="none"
-                  stroke="hsl(var(--foreground)/0.85)"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-
-                {/* Rivers — thin accent lines */}
-                <path d="M220,55 L230,90 L240,120 L245,155 L248,185" fill="none" stroke="hsl(var(--primary)/0.3)" strokeWidth="0.8" strokeDasharray="3 3" />
-                <path d="M175,80 L185,115 L185,160" fill="none" stroke="hsl(var(--primary)/0.2)" strokeWidth="0.7" strokeDasharray="3 4" />
-
-                {/* Division labels */}
-                {[
-                  { label: "Rangpur", cx: 158, cy: 48 },
-                  { label: "Rajshahi", cx: 128, cy: 100 },
-                  { label: "Mymensingh", cx: 237, cy: 92 },
-                  { label: "Sylhet", cx: 318, cy: 92 },
-                  { label: "Dhaka", cx: 232, cy: 148 },
-                  { label: "Chittagong", cx: 340, cy: 265 },
-                  { label: "Khulna", cx: 130, cy: 205 },
-                  { label: "Barisal", cx: 210, cy: 252 },
-                ].map(({ label, cx, cy }) => (
-                  <text
-                    key={label}
-                    x={cx} y={cy}
-                    textAnchor="middle"
-                    fontSize="9"
-                    fill="hsl(var(--foreground)/0.35)"
-                    fontFamily="sans-serif"
-                    letterSpacing="0.5"
+              {/* District labels overlay */}
+              <div className="absolute inset-0 pointer-events-none">
+                {districtLabels.map(({ name, x, y }) => (
+                  <span
+                    key={name}
+                    className="absolute text-[8px] sm:text-[9px] font-semibold tracking-widest uppercase"
+                    style={{
+                      left: `${x}%`,
+                      top: `${y}%`,
+                      transform: "translate(-50%, -50%)",
+                      color: "hsl(var(--foreground)/0.4)",
+                      letterSpacing: "0.08em",
+                      whiteSpace: "nowrap",
+                    }}
                   >
-                    {label.toUpperCase()}
-                  </text>
+                    {name}
+                  </span>
                 ))}
-              </svg>
+              </div>
 
-              {/* ── Pins overlay positioned over SVG ── */}
+              {/* Pins */}
               {players.map((player, idx) => {
-                const isOpen = openPins.has(player.id);
+                const isOpen   = openPins.has(player.id);
                 const isActive = activePinId === player.id;
 
                 return (
                   <motion.button
                     key={player.id}
-                    initial={{ opacity: 0, y: -12, scale: 0.5 }}
-                    animate={mapVisible ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: -12, scale: 0.5 }}
-                    transition={{ delay: 0.15 + idx * 0.06, type: "spring", stiffness: 300, damping: 22 }}
-                    whileHover={{ y: -5, scale: 1.25, transition: { duration: 0.15 } }}
+                    initial={{ opacity: 0, y: -10, scale: 0.4 }}
+                    animate={mapVisible
+                      ? { opacity: 1, y: 0, scale: 1 }
+                      : { opacity: 0, y: -10, scale: 0.4 }}
+                    transition={{ delay: 0.12 + idx * 0.07, type: "spring", stiffness: 320, damping: 24 }}
+                    whileHover={{ y: -5, scale: 1.3, transition: { duration: 0.14 } }}
                     onClick={() => handlePinClick(player.id)}
                     className="absolute focus:outline-none"
                     style={{
@@ -245,17 +206,17 @@ export default function BangladeshMapTestimonials() {
                     }}
                     aria-label={`${player.name} from ${player.district}`}
                   >
-                    {/* Pulse ring for open pins */}
+                    {/* Pulse ring */}
                     {isOpen && (
                       <motion.div
                         className="absolute rounded-full pointer-events-none"
-                        initial={{ scale: 0.8, opacity: 0.6 }}
-                        animate={{ scale: 2.2, opacity: 0 }}
-                        transition={{ duration: 1.4, repeat: Infinity, ease: "easeOut" }}
+                        initial={{ scale: 0.6, opacity: 0.7 }}
+                        animate={{ scale: 2.6, opacity: 0 }}
+                        transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
                         style={{
                           width: 10, height: 10,
                           background: "hsl(var(--primary)/0.5)",
-                          top: "30%", left: "50%",
+                          top: "32%", left: "50%",
                           transform: "translate(-50%, -50%)",
                         }}
                       />
@@ -263,7 +224,7 @@ export default function BangladeshMapTestimonials() {
 
                     <Pin active={isActive} open={isOpen} />
 
-                    {/* Name label — only on open, non-active */}
+                    {/* Name chip — open but not active */}
                     <AnimatePresence>
                       {isOpen && !isActive && (
                         <motion.div
@@ -300,7 +261,7 @@ export default function BangladeshMapTestimonials() {
                     boxShadow: "0 0 0 1px hsl(var(--primary)/0.1), 0 20px 50px -10px rgba(0,0,0,0.6)",
                   }}
                 >
-                  {/* Player photo — tall, no cropping of face */}
+                  {/* Photo — 4:3, face always visible */}
                   <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
                     <img
                       src={activePlayer.image}
@@ -308,23 +269,21 @@ export default function BangladeshMapTestimonials() {
                       className="absolute inset-0 w-full h-full object-cover"
                       style={{ objectPosition: "center 15%" }}
                     />
-                    {/* Gradient: transparent at top, fades out only at very bottom */}
+                    {/* Fade only at very bottom */}
                     <div
                       className="absolute inset-0 pointer-events-none"
                       style={{
-                        background: "linear-gradient(to bottom, transparent 55%, hsl(var(--card)/0.7) 80%, hsl(var(--card)) 100%)",
+                        background: "linear-gradient(to bottom, transparent 55%, hsl(var(--card)/0.65) 80%, hsl(var(--card)) 100%)",
                       }}
                     />
-
-                    {/* Close button */}
+                    {/* Close */}
                     <button
                       onClick={() => setActivePinId(null)}
                       className="absolute top-3 right-3 w-7 h-7 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background/90 transition-colors z-10"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
-
-                    {/* Name overlay — bottom of photo */}
+                    {/* Name overlay */}
                     <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 z-10">
                       <div className="flex items-end justify-between gap-2">
                         <div>
@@ -343,7 +302,7 @@ export default function BangladeshMapTestimonials() {
                     </div>
                   </div>
 
-                  {/* Text blocks below the photo */}
+                  {/* Text blocks */}
                   <div className="px-4 pb-4 pt-3 space-y-3">
                     <div className="rounded-xl p-3 border border-destructive/20 bg-destructive/5">
                       <p className="text-[10px] font-semibold text-destructive/70 uppercase tracking-wider mb-1">The Challenge</p>
@@ -403,6 +362,7 @@ export default function BangladeshMapTestimonials() {
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </section>
