@@ -250,7 +250,6 @@ export default function BangladeshMapTestimonials() {
                     );
                   })}
                 </div>
-              </div>
             </motion.div>
           </motion.div>
 
