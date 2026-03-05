@@ -146,52 +146,24 @@ export default function BangladeshMapTestimonials() {
             style={{ perspective: 1000 }}
             className="w-full max-w-md lg:max-w-lg flex-shrink-0 mx-auto lg:mx-0"
           >
-            {/* 3D tilt wrapper */}
+            {/* No frame — map floats directly on page background */}
             <motion.div
               ref={mapRef}
               style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
               onMouseMove={handleMouse}
               onMouseLeave={handleLeave}
-              className="relative rounded-2xl overflow-visible cursor-crosshair"
+              className="relative overflow-visible cursor-crosshair"
             >
-              {/* Dark background frame with glow */}
-              <div
-                className="relative rounded-2xl overflow-hidden"
-                style={{
-                  background: "radial-gradient(ellipse at 50% 40%, hsl(220 15% 12%) 0%, hsl(220 20% 5%) 100%)",
-                  boxShadow: "0 0 0 1px hsl(var(--primary)/0.15), 0 0 40px hsl(var(--primary)/0.08), 0 25px 60px -15px rgba(0,0,0,0.7)",
-                  padding: "24px",
-                }}
-              >
-                {/* Subtle grid overlay */}
-                <div
-                  className="absolute inset-0 opacity-[0.04] pointer-events-none"
-                  style={{
-                    backgroundImage: "linear-gradient(hsl(var(--foreground)/0.5) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)/0.5) 1px, transparent 1px)",
-                    backgroundSize: "32px 32px",
-                  }}
-                />
-
-                {/* Map image */}
+                {/* Map image — inverted so outlines are white/grey on black fill */}
                 <div className="relative">
                   <img
                     src={bangladeshMap}
                     alt="Bangladesh divisions map"
                     className="w-full select-none pointer-events-none relative z-10"
                     style={{
-                      filter: "grayscale(1) brightness(0.9) contrast(1.1) invert(0)",
-                      mixBlendMode: "screen",
-                      opacity: 0.9,
+                      filter: "invert(1) grayscale(1) brightness(0.85) contrast(1.2)",
                     }}
                     draggable={false}
-                  />
-
-                  {/* Glow halo behind map */}
-                  <div
-                    className="absolute inset-0 z-0 rounded-xl pointer-events-none"
-                    style={{
-                      background: "radial-gradient(ellipse at 50% 50%, hsl(var(--primary)/0.06) 0%, transparent 70%)",
-                    }}
                   />
 
                   {/* Pins overlay — z-20 so they sit above map */}
@@ -278,7 +250,6 @@ export default function BangladeshMapTestimonials() {
                     );
                   })}
                 </div>
-              </div>
             </motion.div>
           </motion.div>
 
