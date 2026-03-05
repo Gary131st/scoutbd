@@ -1,15 +1,14 @@
-import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { X, MapPin, Quote } from "lucide-react";
 import playerRafiq from "@/assets/player-rafiq.jpg";
 import playerTanjim from "@/assets/player-tanjim.jpg";
 import playerNusrat from "@/assets/player-nusrat.jpg";
-import bangladeshMap from "@/assets/bangladesh-divisions-map.png";
 
 type PlayerPin = {
   id: string;
-  x: number; // % relative to map container
-  y: number;
+  x: number; // % relative to SVG viewBox width (0-100)
+  y: number; // % relative to SVG viewBox height (0-100)
   district: string;
   name: string;
   sport: string;
@@ -20,89 +19,83 @@ type PlayerPin = {
   defaultOpen?: boolean;
 };
 
-// Pin positions carefully placed INSIDE the map boundaries for each division
+// Coordinates mapped to Bangladesh SVG viewBox (0 0 500 600)
 const players: PlayerPin[] = [
   {
     id: "rafiq",
-    x: 47,
-    y: 56,
-    district: "Dhaka",
-    name: "Rafiqul Islam",
-    sport: "Football",
-    position: "Midfielder",
+    x: 49, y: 55,
+    district: "Dhaka", name: "Rafiqul Islam", sport: "Football", position: "Midfielder",
     issue: "No platform to showcase talent outside his locality. Spent 3 years unnoticed.",
     story: "Within weeks of uploading his highlight reel on Scout BD, three clubs reached out. He now plays for a Dhaka Premier Division club.",
-    image: playerRafiq,
-    defaultOpen: true,
+    image: playerRafiq, defaultOpen: true,
   },
   {
     id: "tanjim",
-    x: 73,
-    y: 38,
-    district: "Sylhet",
-    name: "Tanjim Ahmed",
-    sport: "Cricket",
-    position: "All-rounder",
+    x: 78, y: 38,
+    district: "Sylhet", name: "Tanjim Ahmed", sport: "Cricket", position: "All-rounder",
     issue: "Playing in remote Sylhet with zero scouting infrastructure. His talent was invisible.",
     story: "Scout BD connected him to a BPL franchise scout. He now holds a regional cricket contract and represents Sylhet in the National Championship.",
-    image: playerTanjim,
-    defaultOpen: true,
+    image: playerTanjim, defaultOpen: true,
   },
   {
     id: "nusrat",
-    x: 21,
-    y: 70,
-    district: "Khulna",
-    name: "Nusrat Jahan",
-    sport: "Football",
-    position: "Forward",
+    x: 20, y: 72,
+    district: "Khulna", name: "Nusrat Jahan", sport: "Football", position: "Forward",
     issue: "Female players in Khulna had no visibility — no scouts ever visited the district.",
     story: "After uploading her skills video, she received an invite to the Bangladesh Women's U-20 trials. She made the squad.",
-    image: playerNusrat,
-    defaultOpen: true,
+    image: playerNusrat, defaultOpen: true,
   },
-  { id: "p4", x: 27, y: 34, district: "Rajshahi", name: "Arif Hossain", sport: "Football", position: "Goalkeeper", issue: "Limited access to professional coaching.", story: "Now training with Rajshahi FC youth academy after being spotted on Scout BD.", image: playerRafiq },
-  { id: "p5", x: 44, y: 80, district: "Barisal", name: "Sumon Dey", sport: "Cricket", position: "Fast Bowler", issue: "No way to reach metropolitan scouts from coastal Barisal.", story: "Secured a trial with a Dhaka-based cricket academy through Scout BD.", image: playerTanjim },
+  { id: "p4", x: 26, y: 33, district: "Rajshahi", name: "Arif Hossain", sport: "Football", position: "Goalkeeper", issue: "Limited access to professional coaching.", story: "Now training with Rajshahi FC youth academy after being spotted on Scout BD.", image: playerRafiq },
+  { id: "p5", x: 44, y: 82, district: "Barisal", name: "Sumon Dey", sport: "Cricket", position: "Fast Bowler", issue: "No way to reach metropolitan scouts from coastal Barisal.", story: "Secured a trial with a Dhaka-based cricket academy through Scout BD.", image: playerTanjim },
   { id: "p6", x: 52, y: 28, district: "Mymensingh", name: "Karim Uddin", sport: "Football", position: "Defender", issue: "Talented but invisible due to lack of local scouting.", story: "Joined Dhaka Abahani youth team after being discovered on Scout BD.", image: playerNusrat },
-  { id: "p7", x: 34, y: 16, district: "Rangpur", name: "Belal Khan", sport: "Cricket", position: "Spinner", issue: "Northern districts ignored by big club scouts.", story: "Offered contract by Rangpur Riders academy after highlight reel went viral.", image: playerRafiq },
-  { id: "p8", x: 60, y: 64, district: "Comilla", name: "Rony Mia", sport: "Football", position: "Winger", issue: "Played street football with no professional pathway.", story: "Discovered by a scout from Chittagong Abahani and offered a trial.", image: playerTanjim },
-  { id: "p9", x: 72, y: 72, district: "Chittagong", name: "Sadia Islam", sport: "Football", position: "Midfielder", issue: "Women's football completely unscouted in Chittagong.", story: "Selected for national women's development camp after Scout BD profile.", image: playerNusrat },
-  { id: "p10", x: 55, y: 46, district: "Noakhali", name: "Imran Hossain", sport: "Football", position: "Striker", issue: "No football clubs operating in his upazilas.", story: "Now on trial with Chittagong Kings after being spotted on Scout BD.", image: playerTanjim },
-  { id: "p11", x: 38, y: 74, district: "Faridpur", name: "Mitu Akter", sport: "Football", position: "Forward", issue: "Female talent completely overlooked in rural areas.", story: "Invited to attend Bangladesh Football Federation's women's development program.", image: playerNusrat },
+  { id: "p7", x: 30, y: 14, district: "Rangpur", name: "Belal Khan", sport: "Cricket", position: "Spinner", issue: "Northern districts ignored by big club scouts.", story: "Offered contract by Rangpur Riders academy after highlight reel went viral.", image: playerRafiq },
+  { id: "p8", x: 62, y: 64, district: "Comilla", name: "Rony Mia", sport: "Football", position: "Winger", issue: "Played street football with no professional pathway.", story: "Discovered by a scout from Chittagong Abahani and offered a trial.", image: playerTanjim },
+  { id: "p9", x: 74, y: 76, district: "Chittagong", name: "Sadia Islam", sport: "Football", position: "Midfielder", issue: "Women's football completely unscouted in Chittagong.", story: "Selected for national women's development camp after Scout BD profile.", image: playerNusrat },
+  { id: "p10", x: 57, y: 47, district: "Noakhali", name: "Imran Hossain", sport: "Football", position: "Striker", issue: "No football clubs operating in his upazilas.", story: "Now on trial with Chittagong Kings after being spotted on Scout BD.", image: playerTanjim },
+  { id: "p11", x: 38, y: 76, district: "Faridpur", name: "Mitu Akter", sport: "Football", position: "Forward", issue: "Female talent completely overlooked in rural areas.", story: "Invited to attend Bangladesh Football Federation's women's development program.", image: playerNusrat },
 ];
 
-// 3D tilt hook for the map card
-function useCardTilt() {
-  const ref = useRef<HTMLDivElement>(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [8, -8]), { stiffness: 200, damping: 20 });
-  const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-8, 8]), { stiffness: 200, damping: 20 });
+// Uniform SVG pin — identical shape for every pin, colour changes only
+function Pin({ active, open }: { active: boolean; open: boolean }) {
+  const fill = open
+    ? "hsl(var(--primary))"
+    : "hsl(var(--foreground)/0.45)";
+  const dot = open
+    ? "hsl(var(--primary-foreground))"
+    : "hsl(var(--background)/0.9)";
+  const glow = active
+    ? "drop-shadow(0 0 6px hsl(var(--primary)))"
+    : open
+    ? "drop-shadow(0 0 4px hsl(var(--primary)/0.6))"
+    : "drop-shadow(0 2px 3px rgba(0,0,0,0.7))";
 
-  const handleMouse = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    x.set((e.clientX - rect.left) / rect.width - 0.5);
-    y.set((e.clientY - rect.top) / rect.height - 0.5);
-  };
-  const handleLeave = () => { x.set(0); y.set(0); };
-
-  return { ref, rotateX, rotateY, handleMouse, handleLeave };
+  return (
+    <svg
+      viewBox="0 0 24 32"
+      width="22"
+      height="29"
+      style={{ filter: glow, display: "block" }}
+    >
+      <path
+        d="M12 1C7.58 1 4 4.58 4 9c0 6.5 8 22 8 22s8-15.5 8-22C20 4.58 16.42 1 12 1z"
+        fill={fill}
+        stroke="rgba(255,255,255,0.15)"
+        strokeWidth="0.6"
+      />
+      <circle cx="12" cy="9" r="3.2" fill={dot} />
+    </svg>
+  );
 }
 
 export default function BangladeshMapTestimonials() {
   const [openPins, setOpenPins] = useState<Set<string>>(new Set());
   const [activePinId, setActivePinId] = useState<string | null>(null);
   const [mapVisible, setMapVisible] = useState(false);
-  const { ref: mapRef, rotateX, rotateY, handleMouse, handleLeave } = useCardTilt();
 
   useEffect(() => {
     if (!mapVisible) return;
-    const defaults = players.filter(p => p.defaultOpen).map(p => p.id);
-    defaults.forEach((id, i) => {
-      setTimeout(() => {
-        setOpenPins(prev => new Set([...prev, id]));
-      }, 600 + i * 300);
+    players.filter(p => p.defaultOpen).forEach((p, i) => {
+      setTimeout(() => setOpenPins(prev => new Set([...prev, p.id])), 500 + i * 250);
     });
   }, [mapVisible]);
 
@@ -118,14 +111,14 @@ export default function BangladeshMapTestimonials() {
   const activePlayer = players.find(p => p.id === activePinId);
 
   return (
-    <section className="py-12 sm:py-20 border-t border-border overflow-hidden">
+    <section className="py-16 sm:py-24 border-t border-border overflow-hidden">
       <div className="container">
         {/* Heading */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-8 sm:mb-12"
+          className="text-center mb-10 sm:mb-14"
         >
           <h2 className="font-display text-3xl sm:text-5xl text-foreground mb-2 sm:mb-3">
             VOICES FROM ACROSS BANGLADESH
@@ -135,190 +128,228 @@ export default function BangladeshMapTestimonials() {
           </p>
         </motion.div>
 
-        <div className="relative flex flex-col lg:flex-row gap-8 items-start justify-center">
+        <div className="relative flex flex-col lg:flex-row gap-10 items-start justify-center">
+
           {/* ── Map ── */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.94, y: 24 }}
-            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             onAnimationComplete={() => setMapVisible(true)}
-            style={{ perspective: 1000 }}
-            className="w-full max-w-md lg:max-w-lg flex-shrink-0 mx-auto lg:mx-0"
+            className="relative w-full max-w-xl lg:max-w-2xl flex-shrink-0 mx-auto lg:mx-0"
           >
-            {/* No frame — map floats directly on page background */}
-            <motion.div
-              ref={mapRef}
-              style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-              onMouseMove={handleMouse}
-              onMouseLeave={handleLeave}
-              className="relative overflow-visible cursor-crosshair"
-            >
-                {/* Map image — inverted so outlines are white/grey on black fill */}
-                <div className="relative">
-                  <img
-                    src={bangladeshMap}
-                    alt="Bangladesh divisions map"
-                    className="w-full select-none pointer-events-none relative z-10"
+            {/* SVG map with pins overlay */}
+            <div className="relative w-full">
+              {/* Bangladesh divisions SVG — transparent background, white/grey outlines */}
+              <svg
+                viewBox="0 0 500 580"
+                className="w-full h-auto"
+                style={{ overflow: "visible" }}
+                aria-hidden="true"
+              >
+                <defs>
+                  <filter id="divisionGlow">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+
+                {/* ── Division paths — Bangladesh 8 divisions ── */}
+                {/* Rangpur */}
+                <path d="M115,20 L200,18 L215,30 L220,55 L200,70 L175,80 L155,75 L130,65 L110,50 Z"
+                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
+                {/* Rajshahi */}
+                <path d="M80,80 L155,75 L175,80 L180,105 L165,125 L140,130 L100,120 L75,105 Z"
+                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
+                {/* Mymensingh */}
+                <path d="M200,70 L270,65 L285,85 L275,115 L245,125 L215,120 L200,105 L195,85 Z"
+                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
+                {/* Sylhet */}
+                <path d="M270,65 L345,55 L370,75 L365,110 L340,130 L305,135 L285,115 L285,85 Z"
+                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
+                {/* Dhaka */}
+                <path d="M180,105 L245,125 L275,115 L285,115 L295,145 L275,175 L245,185 L210,175 L185,160 L175,135 Z"
+                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
+                {/* Comilla / Chittagong Hill Tracts area (East) */}
+                <path d="M285,115 L305,135 L340,130 L360,160 L350,200 L320,230 L290,250 L275,225 L265,195 L275,175 L295,145 Z"
+                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
+                {/* Chittagong */}
+                <path d="M320,230 L360,210 L390,235 L395,275 L370,310 L340,320 L310,295 L295,265 L290,250 Z"
+                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
+                {/* Khulna */}
+                <path d="M75,160 L140,155 L175,155 L185,160 L210,175 L205,215 L185,245 L155,260 L115,255 L80,240 L65,210 L70,180 Z"
+                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
+                {/* Barisal */}
+                <path d="M155,260 L185,245 L210,245 L245,185 L275,175 L265,215 L250,250 L230,275 L205,285 L175,285 L150,275 Z"
+                  fill="none" stroke="hsl(var(--foreground)/0.55)" strokeWidth="1.2" strokeLinejoin="round" />
+
+                {/* Outer border of Bangladesh — bold white outline */}
+                <path
+                  d="M115,20 L200,18 L215,30 L270,65 L345,55 L370,75 L365,110 L360,160 L390,235 L395,275 L370,310 L340,320 L310,295 L290,250 L230,275 L205,285 L175,285 L150,275 L115,255 L80,240 L65,210 L70,180 L75,105 L80,80 L115,20 Z"
+                  fill="none"
+                  stroke="hsl(var(--foreground)/0.85)"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+
+                {/* Rivers — thin accent lines */}
+                <path d="M220,55 L230,90 L240,120 L245,155 L248,185" fill="none" stroke="hsl(var(--primary)/0.3)" strokeWidth="0.8" strokeDasharray="3 3" />
+                <path d="M175,80 L185,115 L185,160" fill="none" stroke="hsl(var(--primary)/0.2)" strokeWidth="0.7" strokeDasharray="3 4" />
+
+                {/* Division labels */}
+                {[
+                  { label: "Rangpur", cx: 158, cy: 48 },
+                  { label: "Rajshahi", cx: 128, cy: 100 },
+                  { label: "Mymensingh", cx: 237, cy: 92 },
+                  { label: "Sylhet", cx: 318, cy: 92 },
+                  { label: "Dhaka", cx: 232, cy: 148 },
+                  { label: "Chittagong", cx: 340, cy: 265 },
+                  { label: "Khulna", cx: 130, cy: 205 },
+                  { label: "Barisal", cx: 210, cy: 252 },
+                ].map(({ label, cx, cy }) => (
+                  <text
+                    key={label}
+                    x={cx} y={cy}
+                    textAnchor="middle"
+                    fontSize="9"
+                    fill="hsl(var(--foreground)/0.35)"
+                    fontFamily="sans-serif"
+                    letterSpacing="0.5"
+                  >
+                    {label.toUpperCase()}
+                  </text>
+                ))}
+              </svg>
+
+              {/* ── Pins overlay positioned over SVG ── */}
+              {players.map((player, idx) => {
+                const isOpen = openPins.has(player.id);
+                const isActive = activePinId === player.id;
+
+                return (
+                  <motion.button
+                    key={player.id}
+                    initial={{ opacity: 0, y: -12, scale: 0.5 }}
+                    animate={mapVisible ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: -12, scale: 0.5 }}
+                    transition={{ delay: 0.15 + idx * 0.06, type: "spring", stiffness: 300, damping: 22 }}
+                    whileHover={{ y: -5, scale: 1.25, transition: { duration: 0.15 } }}
+                    onClick={() => handlePinClick(player.id)}
+                    className="absolute focus:outline-none"
                     style={{
-                      filter: "invert(1) grayscale(1) brightness(0.85) contrast(1.2)",
+                      left: `${player.x}%`,
+                      top: `${player.y}%`,
+                      transform: "translate(-50%, -100%)",
+                      zIndex: isActive ? 30 : isOpen ? 20 : 10,
                     }}
-                    draggable={false}
-                  />
-
-                  {/* Pins overlay — z-20 so they sit above map */}
-                  {players.map((player, idx) => {
-                    const isOpen = openPins.has(player.id);
-                    const isActive = activePinId === player.id;
-
-                    return (
-                      <motion.button
-                        key={player.id}
-                        initial={{ opacity: 0, scale: 0, y: -10 }}
-                        animate={
-                          mapVisible
-                            ? { opacity: 1, scale: 1, y: 0 }
-                            : { opacity: 0, scale: 0, y: -10 }
-                        }
-                        transition={{
-                          delay: 0.2 + idx * 0.07,
-                          duration: 0.5,
-                          type: "spring",
-                          stiffness: 280,
-                          damping: 22,
+                    aria-label={`${player.name} from ${player.district}`}
+                  >
+                    {/* Pulse ring for open pins */}
+                    {isOpen && (
+                      <motion.div
+                        className="absolute rounded-full pointer-events-none"
+                        initial={{ scale: 0.8, opacity: 0.6 }}
+                        animate={{ scale: 2.2, opacity: 0 }}
+                        transition={{ duration: 1.4, repeat: Infinity, ease: "easeOut" }}
+                        style={{
+                          width: 10, height: 10,
+                          background: "hsl(var(--primary)/0.5)",
+                          top: "30%", left: "50%",
+                          transform: "translate(-50%, -50%)",
                         }}
-                        whileHover={{ scale: 1.35, y: -3, transition: { duration: 0.15 } }}
-                        onClick={() => handlePinClick(player.id)}
-                        className="absolute -translate-x-1/2 -translate-y-full focus:outline-none z-20"
-                        style={{ left: `${player.x}%`, top: `${player.y}%` }}
-                        aria-label={`${player.name} from ${player.district}`}
-                      >
-                        {/* Pin glow ring when active */}
-                        {isOpen && (
-                          <motion.div
-                            initial={{ scale: 0.5, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="absolute inset-0 rounded-full pointer-events-none"
-                            style={{
-                              filter: "blur(6px)",
-                              background: "hsl(var(--primary)/0.5)",
-                              transform: "translate(-50%, -50%) scale(2)",
-                              top: "50%",
-                              left: "50%",
-                            }}
-                          />
-                        )}
+                      />
+                    )}
 
-                        {/* SVG Pin */}
-                        <svg
-                          viewBox="0 0 24 32"
-                          className="w-6 h-8 sm:w-7 sm:h-9 drop-shadow-lg relative z-10"
-                          style={{
-                            filter: isActive
-                              ? "drop-shadow(0 0 8px hsl(var(--primary)))"
-                              : isOpen
-                              ? "drop-shadow(0 0 5px hsl(var(--primary)/0.7))"
-                              : "drop-shadow(0 2px 3px rgba(0,0,0,0.6))",
-                          }}
+                    <Pin active={isActive} open={isOpen} />
+
+                    {/* Name label — only on open, non-active */}
+                    <AnimatePresence>
+                      {isOpen && !isActive && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 4, scale: 0.85 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 4, scale: 0.85 }}
+                          transition={{ duration: 0.18 }}
+                          className="absolute bottom-full mb-1 left-1/2 whitespace-nowrap bg-primary text-primary-foreground text-[9px] font-semibold px-2 py-0.5 rounded-full shadow-lg pointer-events-none"
+                          style={{ transform: "translateX(-50%)" }}
                         >
-                          <path
-                            d="M12 0C7.13 0 3 4.13 3 9c0 6.75 9 23 9 23s9-16.25 9-23C21 4.13 16.87 0 12 0z"
-                            fill={isOpen ? "hsl(var(--primary))" : "hsl(var(--foreground)/0.65)"}
-                            stroke={isOpen ? "hsl(var(--primary-foreground)/0.3)" : "hsl(var(--background)/0.4)"}
-                            strokeWidth="0.8"
-                          />
-                          <circle cx="12" cy="9" r="3.5"
-                            fill={isOpen ? "hsl(var(--primary-foreground))" : "hsl(var(--background)/0.8)"}
-                          />
-                        </svg>
-
-                        {/* Name label on open */}
-                        <AnimatePresence>
-                          {isOpen && !isActive && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 4, scale: 0.85 }}
-                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                              exit={{ opacity: 0, y: 4, scale: 0.85 }}
-                              transition={{ duration: 0.2 }}
-                              className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary text-primary-foreground text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-lg pointer-events-none z-30"
-                            >
-                              {player.name.split(" ")[0]} · {player.district}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.button>
-                    );
-                  })}
-                </div>
-            </motion.div>
+                          {player.name.split(" ")[0]} · {player.district}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.button>
+                );
+              })}
+            </div>
           </motion.div>
 
           {/* ── Testimonial Panel ── */}
-          <div className="w-full lg:max-w-sm lg:flex-shrink-0 sticky top-24">
+          <div className="w-full lg:max-w-sm lg:flex-shrink-0 lg:sticky lg:top-24">
             <AnimatePresence mode="wait">
               {activePlayer ? (
                 <motion.div
                   key={activePlayer.id}
-                  initial={{ opacity: 0, x: 28, scale: 0.96 }}
+                  initial={{ opacity: 0, x: 24, scale: 0.97 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: -28, scale: 0.96 }}
-                  transition={{ duration: 0.32, ease: "easeOut" }}
-                  className="rounded-2xl overflow-hidden shadow-2xl border border-primary/20"
+                  exit={{ opacity: 0, x: -24, scale: 0.97 }}
+                  transition={{ duration: 0.28, ease: "easeOut" }}
+                  className="rounded-2xl overflow-hidden border border-primary/20"
                   style={{
                     background: "hsl(var(--card))",
-                    boxShadow: "0 0 0 1px hsl(var(--primary)/0.12), 0 20px 50px -10px rgba(0,0,0,0.5)",
+                    boxShadow: "0 0 0 1px hsl(var(--primary)/0.1), 0 20px 50px -10px rgba(0,0,0,0.6)",
                   }}
                 >
-                  {/* ── Player photo: full bleed, face visible, smooth fade ── */}
-                  <div className="relative w-full" style={{ paddingBottom: "72%" }}>
+                  {/* Player photo — tall, no cropping of face */}
+                  <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
                     <img
                       src={activePlayer.image}
                       alt={activePlayer.name}
-                      className="absolute inset-0 w-full h-full object-cover object-center"
-                      style={{ objectPosition: "center 20%" }}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{ objectPosition: "center 15%" }}
                     />
-                    {/* Smooth gradient: fully transparent on top half, fades to card color at bottom */}
+                    {/* Gradient: transparent at top, fades out only at very bottom */}
                     <div
-                      className="absolute inset-0"
+                      className="absolute inset-0 pointer-events-none"
                       style={{
-                        background: "linear-gradient(to bottom, transparent 30%, transparent 45%, hsl(var(--card)/0.6) 68%, hsl(var(--card)) 100%)",
+                        background: "linear-gradient(to bottom, transparent 55%, hsl(var(--card)/0.7) 80%, hsl(var(--card)) 100%)",
                       }}
                     />
 
                     {/* Close button */}
                     <button
                       onClick={() => setActivePinId(null)}
-                      className="absolute top-3 right-3 w-7 h-7 rounded-full bg-background/70 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background transition-colors shadow z-10"
+                      className="absolute top-3 right-3 w-7 h-7 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background/90 transition-colors z-10"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
 
-                    {/* Name + district overlaid over bottom gradient */}
+                    {/* Name overlay — bottom of photo */}
                     <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 z-10">
-                      <div className="flex items-end justify-between">
+                      <div className="flex items-end justify-between gap-2">
                         <div>
-                          <h3 className="font-display text-lg text-foreground leading-tight drop-shadow-md">
+                          <h3 className="font-display text-lg text-foreground leading-tight">
                             {activePlayer.name}
                           </h3>
                           <p className="text-xs text-muted-foreground mt-0.5">
                             {activePlayer.sport} · {activePlayer.position}
                           </p>
                         </div>
-                        <div className="flex items-center gap-1 bg-primary/90 backdrop-blur-sm rounded-full px-2 py-0.5 mb-0.5">
-                          <MapPin className="h-3 w-3 text-primary-foreground" />
+                        <div className="flex items-center gap-1 bg-primary/90 rounded-full px-2 py-0.5 flex-shrink-0">
+                          <MapPin className="h-2.5 w-2.5 text-primary-foreground" />
                           <span className="text-[10px] font-semibold text-primary-foreground">{activePlayer.district}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Content blocks — below image, no overlap */}
+                  {/* Text blocks below the photo */}
                   <div className="px-4 pb-4 pt-3 space-y-3">
-                    <div className="bg-destructive/8 border border-destructive/20 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-destructive/80 uppercase tracking-wider mb-1">The Challenge</p>
+                    <div className="rounded-xl p-3 border border-destructive/20 bg-destructive/5">
+                      <p className="text-[10px] font-semibold text-destructive/70 uppercase tracking-wider mb-1">The Challenge</p>
                       <p className="text-sm text-muted-foreground leading-relaxed">{activePlayer.issue}</p>
                     </div>
-                    <div className="bg-primary/5 border border-primary/15 rounded-xl p-3">
+                    <div className="rounded-xl p-3 border border-primary/15 bg-primary/5">
                       <p className="text-[10px] font-semibold text-primary uppercase tracking-wider mb-1">The Breakthrough</p>
                       <div className="flex gap-2">
                         <Quote className="h-3.5 w-3.5 text-primary/50 flex-shrink-0 mt-0.5" />
@@ -333,9 +364,9 @@ export default function BangladeshMapTestimonials() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="flex flex-col items-center justify-center h-56 text-center gap-3 bg-card/40 border border-dashed border-border/60 rounded-2xl p-8"
+                  className="flex flex-col items-center justify-center h-56 text-center gap-3 bg-card/30 border border-dashed border-border/50 rounded-2xl p-8"
                 >
-                  <MapPin className="h-8 w-8 text-primary/35" />
+                  <MapPin className="h-7 w-7 text-primary/30" />
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     Click any location pin on the map<br />to read a player's story
                   </p>
@@ -363,17 +394,11 @@ export default function BangladeshMapTestimonials() {
             {/* Legend */}
             <div className="mt-3 flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-1.5">
-                <svg viewBox="0 0 24 32" className="w-4 h-5">
-                  <path d="M12 0C7.13 0 3 4.13 3 9c0 6.75 9 23 9 23s9-16.25 9-23C21 4.13 16.87 0 12 0z" fill="hsl(var(--primary))" />
-                  <circle cx="12" cy="9" r="3.5" fill="hsl(var(--primary-foreground))" />
-                </svg>
+                <Pin active={false} open={true} />
                 <span className="text-xs text-muted-foreground">Has story</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <svg viewBox="0 0 24 32" className="w-4 h-5">
-                  <path d="M12 0C7.13 0 3 4.13 3 9c0 6.75 9 23 9 23s9-16.25 9-23C21 4.13 16.87 0 12 0z" fill="hsl(var(--foreground)/0.5)" />
-                  <circle cx="12" cy="9" r="3.5" fill="hsl(var(--background))" />
-                </svg>
+                <Pin active={false} open={false} />
                 <span className="text-xs text-muted-foreground">More players</span>
               </div>
             </div>
