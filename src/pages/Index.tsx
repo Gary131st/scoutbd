@@ -70,51 +70,8 @@ function RevealSection({ children, delay = 0, className = "" }: {
 }
 
 /* ─────────────────────────────────────────────
-   Particle dust field (hero layer)
+   Remove ParticleField & ScanLine — no longer needed
 ───────────────────────────────────────────── */
-function ParticleField() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {Array.from({ length: 28 }).map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute rounded-full"
-          style={{
-            width:  Math.random() * 3 + 1,
-            height: Math.random() * 3 + 1,
-            left:   `${Math.random() * 100}%`,
-            top:    `${Math.random() * 100}%`,
-            background: `hsl(var(--foreground) / ${Math.random() * 0.15 + 0.03})`,
-          }}
-          animate={{ y: [0, -(Math.random() * 80 + 40)], opacity: [0, 0.6, 0] }}
-          transition={{
-            duration: Math.random() * 6 + 5,
-            repeat: Infinity,
-            delay: Math.random() * 8,
-            ease: "linear",
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   Cinematic scan line
-───────────────────────────────────────────── */
-function ScanLine() {
-  return (
-    <motion.div
-      className="absolute inset-x-0 h-px pointer-events-none z-20"
-      style={{
-        background:
-          "linear-gradient(90deg, transparent, hsl(var(--foreground)/0.12), transparent)",
-      }}
-      animate={{ top: ["0%", "100%"] }}
-      transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-    />
-  );
-}
 
 /* ─────────────────────────────────────────────
    Story chapter — scroll-driven reveal
