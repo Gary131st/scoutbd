@@ -215,6 +215,14 @@ function SplineInner({ onLoad }: { onLoad: () => void }) {
   );
 }
 
+function SplineBackground({ onLoad }: { onLoad: () => void }) {
+  return (
+    <SplineErrorBoundary>
+      <SplineInner onLoad={onLoad} />
+    </SplineErrorBoundary>
+  );
+}
+
 /* ════════════════════════════════════════════
    PAGE
 ════════════════════════════════════════════ */
