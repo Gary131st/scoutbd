@@ -166,31 +166,8 @@ function StoryChapter({
   );
 }
 
-/* ─────────────────────────────────────────────
-   Spline scene — wrapped in Error Boundary so
-   any parse / network / version errors are
-   caught silently and the page keeps working
-───────────────────────────────────────────── */
-function SplineInner({ onLoad }: { onLoad: () => void }) {
-  return (
-    <Suspense fallback={null}>
-      <Spline
-        scene={SPLINE_SCENE}
-        className="absolute inset-0 w-full h-full"
-        onLoad={onLoad}
-        style={{ pointerEvents: "none" }}
-      />
-    </Suspense>
-  );
-}
 
-function SplineBackground({ onLoad }: { onLoad: () => void }) {
-  return (
-    <SplineErrorBoundary>
-      <SplineInner onLoad={onLoad} />
-    </SplineErrorBoundary>
-  );
-}
+
 
 /* ════════════════════════════════════════════
    PAGE
