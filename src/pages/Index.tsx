@@ -214,38 +214,26 @@ const Index = () => {
     return () => clearTimeout(t);
   }, []);
 
-  const handleSplineLoad = () => {
-    setSplineLoaded(true);
-    setHeroContentVisible(true);
-  };
-
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
 
       {/* ══════════════════════════════════════════
-          HERO — Spline 3D cinematic full-bleed
+          HERO — cinematic full-bleed canvas
       ══════════════════════════════════════════ */}
       <section
         ref={heroRef}
         className="relative min-h-screen flex items-center justify-center overflow-hidden"
         style={{ background: "hsl(var(--background))" }}
       >
-        {/* ── Spline 3D background (lazy, fills entire hero) ── */}
+        {/* ── Canvas 3D particle background ── */}
         <motion.div
           className="absolute inset-0 z-0"
           style={{ y: heroY, scale: heroScale, opacity: heroOpacity }}
         >
-          {/* Spline scene layer */}
-          <motion.div
-            className="absolute inset-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: splineLoaded ? 1 : 0 }}
-            transition={{ duration: 1.8, ease: "easeInOut" }}
-          >
-            <SplineBackground onLoad={handleSplineLoad} />
-          </motion.div>
+          {/* CinematicCanvas — interactive particle field, no crash risk */}
+          <CinematicCanvas />
 
-          {/* Fallback / augmentation: cinematic grid (always visible, blends with Spline) */}
+          {/* Cinematic grid overlay */}
           <svg className="absolute inset-0 w-full h-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
