@@ -174,7 +174,7 @@ const Index = () => {
     <div className="min-h-screen overflow-x-hidden bg-background">
 
       {/* ══════════════════════════════════════════
-          HERO — cinematic full-bleed canvas
+          HERO — sports video full-bleed
       ══════════════════════════════════════════ */}
       <section
         ref={heroRef}
