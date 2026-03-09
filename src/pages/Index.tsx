@@ -198,20 +198,17 @@ function StoryChapter({
 }
 
 /* ─────────────────────────────────────────────
-   Spline scene with fallback grid background
+   Spline scene — wrapped in Error Boundary so
+   any parse / network / version errors are
+   caught silently and the page keeps working
 ───────────────────────────────────────────── */
-function SplineBackground({ onLoad }: { onLoad: () => void }) {
-  const [failed, setFailed] = useState(false);
-
-  if (failed) return null;
-
+function SplineInner({ onLoad }: { onLoad: () => void }) {
   return (
     <Suspense fallback={null}>
       <Spline
         scene={SPLINE_SCENE}
         className="absolute inset-0 w-full h-full"
         onLoad={onLoad}
-        onError={() => setFailed(true)}
         style={{ pointerEvents: "none" }}
       />
     </Suspense>
