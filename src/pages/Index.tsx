@@ -13,6 +13,32 @@ import VideoHighlights from "@/components/VideoHighlights";
 // Lazy-load Spline for performance
 const Spline = lazy(() => import("@splinetool/react-spline"));
 
+// Cinematic dark abstract particle scene (Spline public community scene)
+const SPLINE_SCENE = "https://prod.spline.design/6Wq1HputIjZXAhjZ/scene.splinecode";
+
+/* ─────────────────────────────────────────────
+   Error Boundary — silently catches Spline
+   binary parse errors so they never crash
+   the rest of the page
+───────────────────────────────────────────── */
+interface SplineErrorState { hasError: boolean }
+class SplineErrorBoundary extends Component<{ children: ReactNode }, SplineErrorState> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(): SplineErrorState {
+    return { hasError: true };
+  }
+  componentDidCatch(_err: Error, _info: ErrorInfo) {
+    // Swallow Spline errors silently — fallback CSS hero takes over
+  }
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
 // Cinematic dark abstract particle scene (Spline community, CC0)
 // Scene: dark floating orbs / particle field — works on dark backgrounds
 const SPLINE_SCENE = "https://prod.spline.design/6Wq1HputIjZXAhjZ/scene.splinecode";
