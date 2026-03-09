@@ -49,7 +49,7 @@ const players: PlayerPin[] = [
   },
   {
     id: "nusrat",
-    x: 26, y: 62,
+    x: 28, y: 58,
     district: "Khulna", name: "Nusrat Jahan", sport: "Football", position: "Forward",
     issue: "Female players in Khulna had no visibility — no scouts ever visited the district.",
     story: "After uploading her skills video, she received an invite to the Bangladesh Women's U-20 trials. She made the squad.",
