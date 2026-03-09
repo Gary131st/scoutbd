@@ -1,20 +1,14 @@
-import { useState, useEffect, useRef, Suspense, lazy } from "react";
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, Users, Shield, Trophy, Zap, Twitter, Facebook, Instagram, Youtube, Play, ChevronDown } from "lucide-react";
+import { ArrowRight, Users, Shield, Trophy, Twitter, Facebook, Instagram, Youtube, Play, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import BangladeshMapTestimonials from "@/components/BangladeshMapTestimonials";
 import MarqueeTicker from "@/components/MarqueeTicker";
 import VideoHighlights from "@/components/VideoHighlights";
-
-// Lazy-load Spline for performance
-const Spline = lazy(() => import("@splinetool/react-spline"));
-
-// Cinematic dark abstract particle scene (Spline community, CC0)
-// Scene: dark floating orbs / particle field — works on dark backgrounds
-const SPLINE_SCENE = "https://prod.spline.design/6Wq1HputIjZXAhjZ/scene.splinecode";
+import CinematicCanvas from "@/components/CinematicCanvas";
 
 const socialLinks = [
   { Icon: Facebook,  label: "Facebook",   href: "https://facebook.com/scoutbd",  color: "hover:text-blue-400" },
@@ -172,26 +166,8 @@ function StoryChapter({
   );
 }
 
-/* ─────────────────────────────────────────────
-   Spline scene with fallback grid background
-───────────────────────────────────────────── */
-function SplineBackground({ onLoad }: { onLoad: () => void }) {
-  const [failed, setFailed] = useState(false);
 
-  if (failed) return null;
 
-  return (
-    <Suspense fallback={null}>
-      <Spline
-        scene={SPLINE_SCENE}
-        className="absolute inset-0 w-full h-full"
-        onLoad={onLoad}
-        onError={() => setFailed(true)}
-        style={{ pointerEvents: "none" }}
-      />
-    </Suspense>
-  );
-}
 
 /* ════════════════════════════════════════════
    PAGE
@@ -199,7 +175,6 @@ function SplineBackground({ onLoad }: { onLoad: () => void }) {
 const Index = () => {
   const { user, role } = useAuth();
   const [verifiedScouts, setVerifiedScouts] = useState<ScoutProfile[]>([]);
-  const [splineLoaded, setSplineLoaded] = useState(false);
   const [heroContentVisible, setHeroContentVisible] = useState(false);
 
   const heroRef = useRef<HTMLDivElement>(null);
@@ -239,38 +214,26 @@ const Index = () => {
     return () => clearTimeout(t);
   }, []);
 
-  const handleSplineLoad = () => {
-    setSplineLoaded(true);
-    setHeroContentVisible(true);
-  };
-
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
 
       {/* ══════════════════════════════════════════
-          HERO — Spline 3D cinematic full-bleed
+          HERO — cinematic full-bleed canvas
       ══════════════════════════════════════════ */}
       <section
         ref={heroRef}
         className="relative min-h-screen flex items-center justify-center overflow-hidden"
         style={{ background: "hsl(var(--background))" }}
       >
-        {/* ── Spline 3D background (lazy, fills entire hero) ── */}
+        {/* ── Canvas 3D particle background ── */}
         <motion.div
           className="absolute inset-0 z-0"
           style={{ y: heroY, scale: heroScale, opacity: heroOpacity }}
         >
-          {/* Spline scene layer */}
-          <motion.div
-            className="absolute inset-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: splineLoaded ? 1 : 0 }}
-            transition={{ duration: 1.8, ease: "easeInOut" }}
-          >
-            <SplineBackground onLoad={handleSplineLoad} />
-          </motion.div>
+          {/* CinematicCanvas — interactive particle field, no crash risk */}
+          <CinematicCanvas />
 
-          {/* Fallback / augmentation: cinematic grid (always visible, blends with Spline) */}
+          {/* Cinematic grid overlay */}
           <svg className="absolute inset-0 w-full h-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
