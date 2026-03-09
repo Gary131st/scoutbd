@@ -8,8 +8,8 @@ import bangladeshMap from "@/assets/bangladesh-divisions-map.png";
 
 type PlayerPin = {
   id: string;
-  x: number; // % of image width
-  y: number; // % of image height
+  x: number;
+  y: number;
   district: string;
   name: string;
   sport: string;
@@ -20,16 +20,6 @@ type PlayerPin = {
   defaultOpen?: boolean;
 };
 
-// Coordinates carefully measured from the uploaded map image
-// Image origin is top-left. Divisions (approx centre of each region):
-// Rangpur  — top-left bulge
-// Rajshahi — left-centre
-// Mymensingh — top-centre
-// Sylhet   — top-right
-// Dhaka    — centre
-// Khulna   — bottom-left
-// Barisal  — bottom-centre
-// Chittagong — right
 const players: PlayerPin[] = [
   {
     id: "rafiq",
@@ -63,7 +53,6 @@ const players: PlayerPin[] = [
   { id: "p9", x: 53, y: 58, district: "Chittagong", name: "Sadia Islam", sport: "Football", position: "Midfielder", issue: "Women's football completely unscouted in Chittagong.", story: "Selected for national women's development camp after Scout BD profile.", image: playerNusrat },
 ];
 
-// District label positions (visual centre of each division)
 const districtLabels = [
   { name: "Rangpur",    x: 28, y: 13 },
   { name: "Rajshahi",   x: 25, y: 40 },
@@ -76,12 +65,12 @@ const districtLabels = [
 ];
 
 function Pin({ active, open }: { active: boolean; open: boolean }) {
-  const fill = open ? "hsl(var(--primary))" : "hsl(var(--foreground)/0.5)";
-  const dot  = open ? "hsl(var(--primary-foreground))" : "hsl(var(--background)/0.85)";
+  const fill = open ? "hsl(var(--foreground))" : "hsl(var(--foreground)/0.45)";
+  const dot  = open ? "hsl(var(--background))" : "hsl(var(--background)/0.85)";
   const shadow = active
-    ? "drop-shadow(0 0 7px hsl(var(--primary))) drop-shadow(0 2px 4px rgba(0,0,0,0.8))"
+    ? "drop-shadow(0 0 8px hsl(var(--foreground)/0.9)) drop-shadow(0 2px 4px rgba(0,0,0,0.8))"
     : open
-    ? "drop-shadow(0 0 4px hsl(var(--primary)/0.7)) drop-shadow(0 2px 4px rgba(0,0,0,0.7))"
+    ? "drop-shadow(0 0 5px hsl(var(--foreground)/0.6)) drop-shadow(0 2px 4px rgba(0,0,0,0.7))"
     : "drop-shadow(0 2px 4px rgba(0,0,0,0.8))";
 
   return (
@@ -89,8 +78,8 @@ function Pin({ active, open }: { active: boolean; open: boolean }) {
       <path
         d="M12 1C7.58 1 4 4.58 4 9c0 6.5 8 22 8 22s8-15.5 8-22C20 4.58 16.42 1 12 1z"
         fill={fill}
-        stroke="rgba(255,255,255,0.18)"
-        strokeWidth="0.7"
+        stroke="rgba(255,255,255,0.25)"
+        strokeWidth="0.8"
       />
       <circle cx="12" cy="9" r="3" fill={dot} />
     </svg>
@@ -123,7 +112,6 @@ export default function BangladeshMapTestimonials() {
   return (
     <section className="py-16 sm:py-24 border-t border-border overflow-hidden">
       <div className="container">
-        {/* Heading */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -149,34 +137,54 @@ export default function BangladeshMapTestimonials() {
             onAnimationComplete={() => setMapVisible(true)}
             className="relative w-full max-w-lg lg:max-w-xl flex-shrink-0 mx-auto lg:mx-0"
           >
-            {/* Map image — invert makes white bg → black, black fills → white/grey outlines */}
-            <div className="relative w-full select-none" style={{
-              filter: "drop-shadow(0 0 30px hsl(var(--primary) / 0.15)) drop-shadow(0 0 60px hsl(var(--primary) / 0.08))",
-            }}>
+            {/* SVG glow filter applied to the map outline itself */}
+            <svg width="0" height="0" className="absolute">
+              <defs>
+                <filter id="map-outline-glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur1" />
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur2" />
+                  <feColorMatrix in="blur1" type="matrix"
+                    values="3 0 0 0 0.95  0 3 0 0 0.95  0 0 3 0 0.95  0 0 0 1.5 0"
+                    result="glow1" />
+                  <feColorMatrix in="blur2" type="matrix"
+                    values="2 0 0 0 0.85  0 2 0 0 0.85  0 0 2 0 0.85  0 0 0 0.8 0"
+                    result="glow2" />
+                  <feMerge>
+                    <feMergeNode in="glow2" />
+                    <feMergeNode in="glow1" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+            </svg>
+
+            <div className="relative w-full select-none">
               <img
                 src={bangladeshMap}
                 alt="Bangladesh divisions map"
                 className="w-full h-auto pointer-events-none"
                 style={{
-                  filter: "invert(1) brightness(0.82) contrast(1.1)",
+                  filter: "url(#map-outline-glow) invert(1) brightness(0.9) contrast(1.15)",
                   mixBlendMode: "normal",
                 }}
                 draggable={false}
               />
 
-              {/* District labels overlay */}
+              {/* District labels — bright white, clearly readable */}
               <div className="absolute inset-0 pointer-events-none">
                 {districtLabels.map(({ name, x, y }) => (
                   <span
                     key={name}
-                    className="absolute text-[8px] sm:text-[9px] font-semibold tracking-widest uppercase"
+                    className="absolute font-semibold tracking-widest uppercase"
                     style={{
                       left: `${x}%`,
                       top: `${y}%`,
                       transform: "translate(-50%, -50%)",
-                      color: "hsl(var(--foreground)/0.4)",
-                      letterSpacing: "0.08em",
+                      fontSize: "clamp(7px, 1.4vw, 10px)",
+                      color: "hsl(var(--foreground) / 0.85)",
+                      letterSpacing: "0.1em",
                       whiteSpace: "nowrap",
+                      textShadow: "0 0 8px hsl(var(--background)), 0 0 16px hsl(var(--background)), 0 1px 3px rgba(0,0,0,0.9)",
                     }}
                   >
                     {name}
@@ -208,7 +216,6 @@ export default function BangladeshMapTestimonials() {
                     }}
                     aria-label={`${player.name} from ${player.district}`}
                   >
-                    {/* Pulse ring */}
                     {isOpen && (
                       <motion.div
                         className="absolute rounded-full pointer-events-none"
@@ -217,7 +224,7 @@ export default function BangladeshMapTestimonials() {
                         transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
                         style={{
                           width: 10, height: 10,
-                          background: "hsl(var(--primary)/0.5)",
+                          background: "hsl(var(--foreground)/0.4)",
                           top: "32%", left: "50%",
                           transform: "translate(-50%, -50%)",
                         }}
@@ -226,7 +233,6 @@ export default function BangladeshMapTestimonials() {
 
                     <Pin active={isActive} open={isOpen} />
 
-                    {/* Name chip — open but not active */}
                     <AnimatePresence>
                       {isOpen && !isActive && (
                         <motion.div
@@ -234,7 +240,7 @@ export default function BangladeshMapTestimonials() {
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 4, scale: 0.85 }}
                           transition={{ duration: 0.18 }}
-                          className="absolute bottom-full mb-1 left-1/2 whitespace-nowrap bg-primary text-primary-foreground text-[9px] font-semibold px-2 py-0.5 rounded-full shadow-lg pointer-events-none"
+                          className="absolute bottom-full mb-1 left-1/2 whitespace-nowrap bg-foreground text-background text-[9px] font-semibold px-2 py-0.5 rounded-full shadow-lg pointer-events-none"
                           style={{ transform: "translateX(-50%)" }}
                         >
                           {player.name.split(" ")[0]} · {player.district}
@@ -257,13 +263,12 @@ export default function BangladeshMapTestimonials() {
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   exit={{ opacity: 0, x: -24, scale: 0.97 }}
                   transition={{ duration: 0.28, ease: "easeOut" }}
-                  className="rounded-2xl overflow-hidden border border-primary/20"
+                  className="rounded-2xl overflow-hidden border border-border/60"
                   style={{
                     background: "hsl(var(--card))",
-                    boxShadow: "0 0 0 1px hsl(var(--primary)/0.1), 0 20px 50px -10px rgba(0,0,0,0.6)",
+                    boxShadow: "0 0 0 1px hsl(var(--foreground)/0.06), 0 20px 50px -10px rgba(0,0,0,0.6)",
                   }}
                 >
-                  {/* Photo — 4:3, face always visible */}
                   <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
                     <img
                       src={activePlayer.image}
@@ -271,21 +276,18 @@ export default function BangladeshMapTestimonials() {
                       className="absolute inset-0 w-full h-full object-cover"
                       style={{ objectPosition: "center 15%" }}
                     />
-                    {/* Fade only at very bottom */}
                     <div
                       className="absolute inset-0 pointer-events-none"
                       style={{
                         background: "linear-gradient(to bottom, transparent 55%, hsl(var(--card)/0.65) 80%, hsl(var(--card)) 100%)",
                       }}
                     />
-                    {/* Close */}
                     <button
                       onClick={() => setActivePinId(null)}
                       className="absolute top-3 right-3 w-7 h-7 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background/90 transition-colors z-10"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
-                    {/* Name overlay */}
                     <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 z-10">
                       <div className="flex items-end justify-between gap-2">
                         <div>
@@ -296,24 +298,23 @@ export default function BangladeshMapTestimonials() {
                             {activePlayer.sport} · {activePlayer.position}
                           </p>
                         </div>
-                        <div className="flex items-center gap-1 bg-primary/90 rounded-full px-2 py-0.5 flex-shrink-0">
-                          <MapPin className="h-2.5 w-2.5 text-primary-foreground" />
-                          <span className="text-[10px] font-semibold text-primary-foreground">{activePlayer.district}</span>
+                        <div className="flex items-center gap-1 bg-foreground/90 rounded-full px-2 py-0.5 flex-shrink-0">
+                          <MapPin className="h-2.5 w-2.5 text-background" />
+                          <span className="text-[10px] font-semibold text-background">{activePlayer.district}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Text blocks */}
                   <div className="px-4 pb-4 pt-3 space-y-3">
                     <div className="rounded-xl p-3 border border-destructive/20 bg-destructive/5">
                       <p className="text-[10px] font-semibold text-destructive/70 uppercase tracking-wider mb-1">The Challenge</p>
                       <p className="text-sm text-muted-foreground leading-relaxed">{activePlayer.issue}</p>
                     </div>
-                    <div className="rounded-xl p-3 border border-primary/15 bg-primary/5">
-                      <p className="text-[10px] font-semibold text-primary uppercase tracking-wider mb-1">The Breakthrough</p>
+                    <div className="rounded-xl p-3 border border-foreground/10 bg-foreground/5">
+                      <p className="text-[10px] font-semibold text-foreground/60 uppercase tracking-wider mb-1">The Breakthrough</p>
                       <div className="flex gap-2">
-                        <Quote className="h-3.5 w-3.5 text-primary/50 flex-shrink-0 mt-0.5" />
+                        <Quote className="h-3.5 w-3.5 text-foreground/40 flex-shrink-0 mt-0.5" />
                         <p className="text-sm text-foreground leading-relaxed">{activePlayer.story}</p>
                       </div>
                     </div>
@@ -327,7 +328,7 @@ export default function BangladeshMapTestimonials() {
                   exit={{ opacity: 0 }}
                   className="flex flex-col items-center justify-center h-56 text-center gap-3 bg-card/30 border border-dashed border-border/50 rounded-2xl p-8"
                 >
-                  <MapPin className="h-7 w-7 text-primary/30" />
+                  <MapPin className="h-7 w-7 text-foreground/20" />
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     Click any location pin on the map<br />to read a player's story
                   </p>
@@ -335,7 +336,6 @@ export default function BangladeshMapTestimonials() {
               )}
             </AnimatePresence>
 
-            {/* Quick-select chips */}
             <div className="mt-4 flex flex-wrap gap-2">
               {players.filter(p => p.defaultOpen).map(p => (
                 <button
@@ -343,8 +343,8 @@ export default function BangladeshMapTestimonials() {
                   onClick={() => handlePinClick(p.id)}
                   className={`text-xs px-3 py-1.5 rounded-full border transition-all duration-200 ${
                     activePinId === p.id
-                      ? "bg-primary text-primary-foreground border-primary shadow-md"
-                      : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+                      ? "bg-foreground text-background border-foreground shadow-md"
+                      : "bg-card text-muted-foreground border-border hover:border-foreground/40 hover:text-foreground"
                   }`}
                 >
                   {p.name.split(" ")[0]} · {p.district}
@@ -352,7 +352,6 @@ export default function BangladeshMapTestimonials() {
               ))}
             </div>
 
-            {/* Legend */}
             <div className="mt-3 flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-1.5">
                 <Pin active={false} open={true} />
