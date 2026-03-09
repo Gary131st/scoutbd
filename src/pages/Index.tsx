@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef, Suspense, lazy, Component } from "react";
-import type { ErrorInfo, ReactNode } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, Users, Shield, Trophy, Twitter, Facebook, Instagram, Youtube, Play, ChevronDown } from "lucide-react";
@@ -9,37 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import BangladeshMapTestimonials from "@/components/BangladeshMapTestimonials";
 import MarqueeTicker from "@/components/MarqueeTicker";
 import VideoHighlights from "@/components/VideoHighlights";
-
-// Lazy-load Spline for performance
-const Spline = lazy(() => import("@splinetool/react-spline"));
-
-// Cinematic dark abstract particle scene (Spline public community scene)
-const SPLINE_SCENE = "https://prod.spline.design/6Wq1HputIjZXAhjZ/scene.splinecode";
-
-/* ─────────────────────────────────────────────
-   Error Boundary — silently catches Spline
-   binary parse errors so they never crash
-   the rest of the page
-───────────────────────────────────────────── */
-interface SplineErrorState { hasError: boolean }
-class SplineErrorBoundary extends Component<{ children: ReactNode }, SplineErrorState> {
-  constructor(props: { children: ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-  static getDerivedStateFromError(): SplineErrorState {
-    return { hasError: true };
-  }
-  componentDidCatch(_err: Error, _info: ErrorInfo) {
-    // Swallow Spline errors silently — fallback CSS hero takes over
-  }
-  render() {
-    if (this.state.hasError) return null;
-    return this.props.children;
-  }
-}
-
-// (duplicate removed)
+import CinematicCanvas from "@/components/CinematicCanvas";
 
 const socialLinks = [
   { Icon: Facebook,  label: "Facebook",   href: "https://facebook.com/scoutbd",  color: "hover:text-blue-400" },
