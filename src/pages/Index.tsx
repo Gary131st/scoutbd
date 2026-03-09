@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, Suspense, lazy } from "react";
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef, Suspense, lazy, Component } from "react";
+import type { ErrorInfo, ReactNode } from "react";
+import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, Users, Shield, Trophy, Zap, Twitter, Facebook, Instagram, Youtube, Play, ChevronDown } from "lucide-react";
+import { ArrowRight, Users, Shield, Trophy, Twitter, Facebook, Instagram, Youtube, Play, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
