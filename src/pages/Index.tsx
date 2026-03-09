@@ -742,7 +742,7 @@ const Index = () => {
               "radial-gradient(ellipse 60% 70% at 50% 50%, hsl(var(--foreground)/0.05) 0%, transparent 65%)",
           }}
         />
-        <ParticleField />
+        {/* ambient radial only */}
 
         <div className="container text-center relative z-10">
           <RevealSection>
