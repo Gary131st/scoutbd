@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import BangladeshMapTestimonials from "@/components/BangladeshMapTestimonials";
 import MarqueeTicker from "@/components/MarqueeTicker";
 import VideoHighlights from "@/components/VideoHighlights";
-import CinematicCanvas from "@/components/CinematicCanvas";
 
 const socialLinks = [
   { Icon: Facebook,  label: "Facebook",   href: "https://facebook.com/scoutbd",  color: "hover:text-blue-400" },
