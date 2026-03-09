@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import BangladeshMapTestimonials from "@/components/BangladeshMapTestimonials";
 import MarqueeTicker from "@/components/MarqueeTicker";
 import VideoHighlights from "@/components/VideoHighlights";
+import heroSportsVideo from "@/assets/hero-sports.mp4";
 
 const socialLinks = [
   { Icon: Facebook,  label: "Facebook",   href: "https://facebook.com/scoutbd",  color: "hover:text-blue-400" },
@@ -195,10 +196,7 @@ const Index = () => {
             className="absolute inset-0 w-full h-full object-cover"
             style={{ objectPosition: "center center" }}
           >
-            {/* Primary: football match — free use from Pexels */}
-            <source src="https://videos.pexels.com/video-files/2611803/2611803-hd_1920_1080_24fps.mp4" type="video/mp4" />
-            {/* Fallback: sports action */}
-            <source src="https://videos.pexels.com/video-files/856951/856951-hd_1920_1080_25fps.mp4" type="video/mp4" />
+            <source src={heroSportsVideo} type="video/mp4" />
           </video>
 
           {/* Dark cinematic overlay — keeps text readable */}
