@@ -39,9 +39,7 @@ class SplineErrorBoundary extends Component<{ children: ReactNode }, SplineError
   }
 }
 
-// Cinematic dark abstract particle scene (Spline community, CC0)
-// Scene: dark floating orbs / particle field — works on dark backgrounds
-const SPLINE_SCENE = "https://prod.spline.design/6Wq1HputIjZXAhjZ/scene.splinecode";
+// (duplicate removed)
 
 const socialLinks = [
   { Icon: Facebook,  label: "Facebook",   href: "https://facebook.com/scoutbd",  color: "hover:text-blue-400" },
