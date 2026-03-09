@@ -175,7 +175,6 @@ function StoryChapter({
 const Index = () => {
   const { user, role } = useAuth();
   const [verifiedScouts, setVerifiedScouts] = useState<ScoutProfile[]>([]);
-  const [splineLoaded, setSplineLoaded] = useState(false);
   const [heroContentVisible, setHeroContentVisible] = useState(false);
 
   const heroRef = useRef<HTMLDivElement>(null);
