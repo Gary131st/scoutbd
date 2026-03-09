@@ -65,14 +65,14 @@ const players: PlayerPin[] = [
 
 // District label positions (visual centre of each division)
 const districtLabels = [
-  { name: "Rangpur",    x: 24, y: 11 },
-  { name: "Rajshahi",   x: 24, y: 41 },
-  { name: "Mymensingh", x: 50, y: 24 },
-  { name: "Sylhet",     x: 73, y: 22 },
-  { name: "Dhaka",      x: 46, y: 46 },
-  { name: "Khulna",     x: 20, y: 63 },
-  { name: "Barisal",    x: 44, y: 73 },
-  { name: "Chittagong", x: 72, y: 62 },
+  { name: "Rangpur",    x: 28, y: 13 },
+  { name: "Rajshahi",   x: 25, y: 40 },
+  { name: "Mymensingh", x: 44, y: 26 },
+  { name: "Sylhet",     x: 58, y: 22 },
+  { name: "Dhaka",      x: 42, y: 43 },
+  { name: "Khulna",     x: 24, y: 58 },
+  { name: "Barisal",    x: 39, y: 68 },
+  { name: "Chittagong", x: 56, y: 55 },
 ];
 
 function Pin({ active, open }: { active: boolean; open: boolean }) {
