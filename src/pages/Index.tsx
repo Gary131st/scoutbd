@@ -181,71 +181,66 @@ const Index = () => {
         className="relative min-h-screen flex items-center justify-center overflow-hidden"
         style={{ background: "hsl(var(--background))" }}
       >
-        {/* ── Canvas 3D particle background ── */}
+        {/* ── Sports video background with scroll parallax ── */}
         <motion.div
           className="absolute inset-0 z-0"
-          style={{ y: heroY, scale: heroScale, opacity: heroOpacity }}
+          style={{ y: heroY, scale: heroScale }}
         >
-          {/* CinematicCanvas — interactive particle field, no crash risk */}
-          <CinematicCanvas />
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ objectPosition: "center center" }}
+          >
+            {/* Primary: football match — free use from Pexels */}
+            <source src="https://videos.pexels.com/video-files/2611803/2611803-hd_1920_1080_24fps.mp4" type="video/mp4" />
+            {/* Fallback: sports action */}
+            <source src="https://videos.pexels.com/video-files/856951/856951-hd_1920_1080_25fps.mp4" type="video/mp4" />
+          </video>
 
-          {/* Cinematic grid overlay */}
-          <svg className="absolute inset-0 w-full h-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-                <path d="M 60 0 L 0 0 0 60" fill="none" stroke="hsl(var(--foreground))" strokeWidth="0.5"/>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
-
-          {/* Horizon glow line */}
+          {/* Dark cinematic overlay — keeps text readable */}
           <div
-            className="absolute left-0 right-0 h-px"
+            className="absolute inset-0"
             style={{
-              top: "55%",
               background:
-                "linear-gradient(90deg, transparent 0%, hsl(var(--foreground)/0.15) 30%, hsl(var(--foreground)/0.3) 50%, hsl(var(--foreground)/0.15) 70%, transparent 100%)",
-              boxShadow: "0 0 40px 2px hsl(var(--foreground)/0.08)",
+                "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.7) 100%)",
             }}
           />
 
-          {/* Vertical light beams */}
-          {[20, 50, 80].map((x, i) => (
-            <motion.div
-              key={i}
-              className="absolute top-0 bottom-0 w-px"
-              style={{
-                left: `${x}%`,
-                background: `linear-gradient(to bottom, transparent, hsl(var(--foreground)/0.04) 30%, hsl(var(--foreground)/0.08) 55%, transparent)`,
-              }}
-              animate={{ opacity: [0.4, 1, 0.4] }}
-              transition={{ duration: 4 + i, repeat: Infinity, delay: i * 1.5 }}
-            />
-          ))}
+          {/* Subtle colour grade — very dark teal/cool tone */}
+          <div
+            className="absolute inset-0 pointer-events-none mix-blend-multiply"
+            style={{ background: "hsl(220 30% 6%)" }}
+          />
         </motion.div>
 
-        {/* ── Particle dust (z-index above Spline) ── */}
-        <div className="absolute inset-0 z-[1] pointer-events-none">
-          <ParticleField />
-          <ScanLine />
-        </div>
+        {/* ── Vignette + scroll fade-out ── */}
+        <motion.div
+          className="absolute inset-0 z-[1] pointer-events-none"
+          style={{ opacity: heroOpacity }}
+        >
+          {/* Edge vignette */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse 90% 90% at 50% 50%, transparent 55%, rgba(0,0,0,0.6) 100%)",
+            }}
+          />
+          {/* Cinematic letterbox lines */}
+          <div className="absolute top-0 inset-x-0 h-16" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.5), transparent)" }} />
+        </motion.div>
 
-        {/* Deep radial spotlight */}
+        {/* ── Bottom blend into page ── */}
         <div
-          className="absolute inset-0 z-[2] pointer-events-none"
+          className="absolute bottom-0 left-0 right-0 z-[2] pointer-events-none"
           style={{
+            height: "35%",
             background:
-              "radial-gradient(ellipse 80% 60% at 50% 40%, hsl(var(--foreground)/0.04) 0%, transparent 70%)",
-          }}
-        />
-
-        {/* Bottom vignette — blends Spline into page */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-48 z-[3] pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%)",
+              "linear-gradient(to top, hsl(var(--background)) 0%, hsl(var(--background)/0.7) 40%, transparent 100%)",
           }}
         />
 
