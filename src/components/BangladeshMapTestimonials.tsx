@@ -150,13 +150,15 @@ export default function BangladeshMapTestimonials() {
             className="relative w-full max-w-lg lg:max-w-xl flex-shrink-0 mx-auto lg:mx-0"
           >
             {/* Map image — invert makes white bg → black, black fills → white/grey outlines */}
-            <div className="relative w-full select-none">
+            <div className="relative w-full select-none" style={{
+              filter: "drop-shadow(0 0 30px hsl(var(--primary) / 0.15)) drop-shadow(0 0 60px hsl(var(--primary) / 0.08))",
+            }}>
               <img
                 src={bangladeshMap}
                 alt="Bangladesh divisions map"
                 className="w-full h-auto pointer-events-none"
                 style={{
-                  filter: "invert(1) brightness(0.78) contrast(1.15)",
+                  filter: "invert(1) brightness(0.82) contrast(1.1)",
                   mixBlendMode: "normal",
                 }}
                 draggable={false}
