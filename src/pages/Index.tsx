@@ -165,8 +165,8 @@ const Index = () => {
     };
     fetchScouts();
 
-    // Always reveal hero content after a brief delay — Spline is bonus
-    const t = setTimeout(() => setHeroContentVisible(true), 400);
+    // Show hero content immediately — no async 3D scene to wait for
+    const t = setTimeout(() => setHeroContentVisible(true), 100);
     return () => clearTimeout(t);
   }, []);
 
