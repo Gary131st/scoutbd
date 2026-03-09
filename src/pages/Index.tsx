@@ -1,20 +1,23 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, Users, Shield, Trophy, Twitter, Facebook, Instagram, Youtube, Play, ChevronDown } from "lucide-react";
+import {
+  ArrowRight, Users, Shield, Trophy, Twitter, Facebook,
+  Instagram, Youtube, Play, ChevronDown, Star, Zap, MapPin, TrendingUp
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import BangladeshMapTestimonials from "@/components/BangladeshMapTestimonials";
 import MarqueeTicker from "@/components/MarqueeTicker";
 import VideoHighlights from "@/components/VideoHighlights";
-import heroSportsVideo from "@/assets/hero-sports.mp4";
+import heroVideo from "@/assets/hero-video.mp4";
 
 const socialLinks = [
-  { Icon: Facebook,  label: "Facebook",   href: "https://facebook.com/scoutbd",  color: "hover:text-blue-400" },
+  { Icon: Facebook,  label: "Facebook",    href: "https://facebook.com/scoutbd",  color: "hover:text-blue-400" },
   { Icon: Twitter,   label: "Twitter / X", href: "https://twitter.com/scoutbd",   color: "hover:text-sky-400" },
-  { Icon: Instagram, label: "Instagram",  href: "https://instagram.com/scoutbd", color: "hover:text-pink-400" },
-  { Icon: Youtube,   label: "YouTube",    href: "https://youtube.com/@scoutbd",  color: "hover:text-red-400" },
+  { Icon: Instagram, label: "Instagram",   href: "https://instagram.com/scoutbd", color: "hover:text-pink-400" },
+  { Icon: Youtube,   label: "YouTube",     href: "https://youtube.com/@scoutbd",  color: "hover:text-red-400" },
 ];
 
 type ScoutProfile = {
@@ -24,107 +27,63 @@ type ScoutProfile = {
   avatar_url: string | null;
 };
 
-/* ─────────────────────────────────────────────
-   Animated number counter
-───────────────────────────────────────────── */
+/* ── Animated counter ── */
 function Counter({ target, suffix = "" }: { target: number; suffix?: string }) {
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });
-
   useEffect(() => {
     if (!inView) return;
     let start = 0;
-    const duration = 1800;
-    const step = (timestamp: number) => {
-      if (!start) start = timestamp;
-      const progress = Math.min((timestamp - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
+    const step = (ts: number) => {
+      if (!start) start = ts;
+      const prog = Math.min((ts - start) / 1800, 1);
+      const eased = 1 - Math.pow(1 - prog, 3);
       setCount(Math.floor(eased * target));
-      if (progress < 1) requestAnimationFrame(step);
+      if (prog < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
   }, [inView, target]);
-
   return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
 }
 
-/* ─────────────────────────────────────────────
-   Scroll-reveal section
-───────────────────────────────────────────── */
-function RevealSection({ children, delay = 0, className = "" }: {
-  children: React.ReactNode; delay?: number; className?: string;
+/* ── Scroll-reveal ── */
+function Reveal({ children, delay = 0, className = "", direction = "up" }: {
+  children: React.ReactNode; delay?: number; className?: string; direction?: "up" | "left" | "right";
 }) {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-10% 0px" });
+  const inView = useInView(ref, { once: true, margin: "-8% 0px" });
+  const initial = direction === "left" ? { opacity: 0, x: -50 } : direction === "right" ? { opacity: 0, x: 50 } : { opacity: 0, y: 50 };
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 48 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.75, delay, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
-    >
+    <motion.div ref={ref} initial={initial} animate={inView ? { opacity: 1, x: 0, y: 0 } : {}}
+      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }} className={className}>
       {children}
     </motion.div>
   );
 }
 
-/* ─────────────────────────────────────────────
-   Remove ParticleField & ScanLine — no longer needed
-───────────────────────────────────────────── */
-
-/* ─────────────────────────────────────────────
-   Story chapter — scroll-driven reveal
-───────────────────────────────────────────── */
-function StoryChapter({
-  number, tag, title, body, side = "left", accent, icon: Icon,
-}: {
-  number: string; tag: string; title: string; body: string;
-  side?: "left" | "right"; accent: string; icon: React.ElementType;
+/* ── Floating badge pill ── */
+function FloatingBadge({ icon: Icon, label, value, delay = 0, className = "" }: {
+  icon: React.ElementType; label: string; value: string; delay?: number; className?: string;
 }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-15% 0px" });
-
   return (
     <motion.div
-      ref={ref}
-      initial={{ opacity: 0, x: side === "left" ? -60 : 60 }}
-      animate={inView ? { opacity: 1, x: 0 } : {}}
-      transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
-      className={`flex flex-col ${side === "right" ? "sm:items-end sm:text-right" : "sm:items-start"} gap-4 max-w-md`}
+      initial={{ opacity: 0, scale: 0.6, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={`absolute glass-green rounded-2xl px-4 py-3 flex items-center gap-3 animate-float ${className}`}
+      style={{ animationDelay: `${delay}s` }}
     >
-      <div className="flex items-center gap-3">
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center border"
-          style={{ borderColor: accent + "40", background: accent + "10" }}
-        >
-          <Icon className="h-5 w-5" style={{ color: accent }} />
-        </div>
-        <span className="text-xs font-semibold tracking-[0.2em] uppercase" style={{ color: accent }}>
-          {tag}
-        </span>
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--green) / 0.2)" }}>
+        <Icon className="h-4 w-4" style={{ color: "hsl(var(--green))" }} />
       </div>
       <div>
-        <span
-          className="font-display text-[5rem] leading-none opacity-5 block -mb-6"
-          style={{ color: accent }}
-        >
-          {number}
-        </span>
-        <h3 className="font-display text-3xl sm:text-4xl text-foreground leading-tight">
-          {title}
-        </h3>
+        <div className="text-xs text-muted-foreground leading-none mb-0.5">{label}</div>
+        <div className="text-sm font-bold text-foreground leading-none">{value}</div>
       </div>
-      <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-sm">
-        {body}
-      </p>
     </motion.div>
   );
 }
-
-
-
 
 /* ════════════════════════════════════════════
    PAGE
@@ -132,42 +91,29 @@ function StoryChapter({
 const Index = () => {
   const { user, role } = useAuth();
   const [verifiedScouts, setVerifiedScouts] = useState<ScoutProfile[]>([]);
-  const [heroContentVisible, setHeroContentVisible] = useState(false);
+  const [heroReady, setHeroReady] = useState(false);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.65], [1, 0]);
-  const heroScale   = useTransform(scrollYProgress, [0, 0.65], [1, 1.08]);
-  const heroY       = useTransform(scrollYProgress, [0, 1], ["0%", "28%"]);
-  const taglineY    = useTransform(scrollYProgress, [0, 0.5], ["0%", "-40%"]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+  const heroY       = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
+  const heroScale   = useTransform(scrollYProgress, [0, 0.7], [1, 1.06]);
 
   useEffect(() => {
     const fetchScouts = async () => {
-      const { data: scoutData } = await supabase
-        .from("scout_profiles")
-        .select("user_id, organization")
-        .eq("verification_status", "active")
-        .limit(12);
-      if (!scoutData || scoutData.length === 0) return;
+      const { data: scoutData } = await supabase.from("scout_profiles").select("user_id, organization").eq("verification_status", "active").limit(12);
+      if (!scoutData?.length) return;
       const userIds = scoutData.map((s) => s.user_id);
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, avatar_url")
-        .in("user_id", userIds);
-      const profileMap = Object.fromEntries((profileData ?? []).map((p) => [p.user_id, p]));
-      setVerifiedScouts(
-        scoutData.map((s) => ({
-          user_id: s.user_id,
-          organization: s.organization,
-          full_name: profileMap[s.user_id]?.full_name ?? "Scout",
-          avatar_url: profileMap[s.user_id]?.avatar_url ?? null,
-        }))
-      );
+      const { data: profileData } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds);
+      const map = Object.fromEntries((profileData ?? []).map((p) => [p.user_id, p]));
+      setVerifiedScouts(scoutData.map((s) => ({
+        user_id: s.user_id, organization: s.organization,
+        full_name: map[s.user_id]?.full_name ?? "Scout",
+        avatar_url: map[s.user_id]?.avatar_url ?? null,
+      })));
     };
     fetchScouts();
-
-    // Show hero content immediately — no async 3D scene to wait for
-    const t = setTimeout(() => setHeroContentVisible(true), 100);
+    const t = setTimeout(() => setHeroReady(true), 200);
     return () => clearTimeout(t);
   }, []);
 
@@ -175,225 +121,158 @@ const Index = () => {
     <div className="min-h-screen overflow-x-hidden bg-background">
 
       {/* ══════════════════════════════════════════
-          HERO — sports video full-bleed
+          HERO — full-bleed sports video
       ══════════════════════════════════════════ */}
-      <section
-        ref={heroRef}
-        className="relative min-h-screen flex items-center justify-center overflow-hidden"
-        style={{ background: "hsl(var(--background))" }}
-      >
-        {/* ── Sports video background with scroll parallax ── */}
-        <motion.div
-          className="absolute inset-0 z-0"
-          style={{ y: heroY, scale: heroScale }}
-        >
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
+
+        {/* ── VIDEO LAYER ── */}
+        <motion.div className="absolute inset-0 z-0" style={{ y: heroY, scale: heroScale }}>
           <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
+            autoPlay loop muted playsInline preload="auto"
             className="absolute inset-0 w-full h-full object-cover"
-            style={{ objectPosition: "center center" }}
           >
-            <source src={heroSportsVideo} type="video/mp4" />
+            <source src={heroVideo} type="video/mp4" />
           </video>
-
-          {/* Dark cinematic overlay — keeps text readable */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.7) 100%)",
-            }}
-          />
-
-          {/* Subtle colour grade — very dark teal/cool tone */}
-          <div
-            className="absolute inset-0 pointer-events-none mix-blend-multiply"
-            style={{ background: "hsl(220 30% 6%)" }}
-          />
+          {/* Lighter overlay — video must be visible */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(160deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.55) 100%)"
+          }} />
+          {/* Green tint accent at bottom-left */}
+          <div className="absolute bottom-0 left-0 w-2/3 h-2/3 pointer-events-none" style={{
+            background: "radial-gradient(ellipse at bottom left, hsl(142 76% 20% / 0.35) 0%, transparent 65%)"
+          }} />
         </motion.div>
 
-        {/* ── Vignette + scroll fade-out ── */}
-        <motion.div
-          className="absolute inset-0 z-[1] pointer-events-none"
-          style={{ opacity: heroOpacity }}
-        >
-          {/* Edge vignette */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(ellipse 90% 90% at 50% 50%, transparent 55%, rgba(0,0,0,0.6) 100%)",
-            }}
-          />
-          {/* Cinematic letterbox lines */}
-          <div className="absolute top-0 inset-x-0 h-16" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.5), transparent)" }} />
-        </motion.div>
+        {/* ── Bottom fade-into-page ── */}
+        <div className="absolute bottom-0 left-0 right-0 z-[2] pointer-events-none" style={{
+          height: "30%",
+          background: "linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%)"
+        }} />
 
-        {/* ── Bottom blend into page ── */}
-        <div
-          className="absolute bottom-0 left-0 right-0 z-[2] pointer-events-none"
-          style={{
-            height: "35%",
-            background:
-              "linear-gradient(to top, hsl(var(--background)) 0%, hsl(var(--background)/0.7) 40%, transparent 100%)",
-          }}
-        />
+        {/* ── HERO CONTENT ── */}
+        <motion.div style={{ opacity: heroOpacity }}
+          className="container relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12 pt-28 pb-24">
 
-        {/* ── Hero content ── */}
-        <motion.div
-          style={{ opacity: heroOpacity, y: taglineY }}
-          className="container relative z-10 flex flex-col items-center text-center pt-24 pb-20"
-        >
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.85 }}
-            animate={heroContentVisible ? { opacity: 1, y: 0, scale: 1 } : {}}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-8 border"
-            style={{
-              background: "hsl(var(--foreground)/0.04)",
-              borderColor: "hsl(var(--foreground)/0.12)",
-            }}
-          >
-            <motion.div
-              animate={{ scale: [1, 1.3, 1], opacity: [0.6, 1, 0.6] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ background: "hsl(var(--foreground))" }}
-            />
-            <span className="text-xs font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-              Bangladesh Sports Revolution
-            </span>
-          </motion.div>
-
-          {/* Main headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 40 }}
-            animate={heroContentVisible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.9, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="font-display leading-[0.88] text-foreground mb-6"
-            style={{ fontSize: "clamp(3.5rem, 12vw, 9rem)" }}
-          >
-            YOUR TALENT
-            <br />
-            <span
-              className="inline-block"
-              style={{
-                WebkitTextStroke: "1px hsl(var(--foreground)/0.4)",
-                color: "transparent",
-                textShadow: "0 0 80px hsl(var(--foreground)/0.12)",
-              }}
+          {/* Left — headline */}
+          <div className="flex-1 max-w-2xl">
+            {/* Live badge */}
+            <motion.div initial={{ opacity: 0, x: -30 }} animate={heroReady ? { opacity: 1, x: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="inline-flex items-center gap-2.5 rounded-full px-4 py-2 mb-7 border"
+              style={{ background: "hsl(142 76% 10% / 0.7)", borderColor: "hsl(var(--green) / 0.4)", backdropFilter: "blur(12px)" }}
             >
-              DESERVES
-            </span>
-            <br />
-            A STAGE
-          </motion.h1>
+              <motion.span animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.4, repeat: Infinity }}
+                className="w-2 h-2 rounded-full" style={{ background: "hsl(var(--green))" }} />
+              <span className="text-xs font-bold tracking-[0.18em] uppercase" style={{ color: "hsl(var(--green))" }}>
+                Bangladesh Sports Revolution
+              </span>
+            </motion.div>
 
-          {/* Subline */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={heroContentVisible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.7, delay: 0.5 }}
-            className="text-base sm:text-xl text-muted-foreground max-w-xl mb-10 leading-relaxed"
-          >
-            The first platform connecting Bangladesh's grassroots football & cricket talent
-            with verified scouts. Safe, transparent, built for you.
-          </motion.p>
+            {/* Main headline */}
+            <motion.h1 initial={{ opacity: 0, y: 50 }} animate={heroReady ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="font-display leading-[0.88] text-white mb-6"
+              style={{ fontSize: "clamp(3.8rem, 11vw, 8.5rem)" }}
+            >
+              YOUR TALENT
+              <br />
+              <span className="text-gradient" style={{
+                backgroundImage: "linear-gradient(135deg, hsl(142 76% 60%), hsl(142 76% 40%))",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
+              }}>DESERVES</span>
+              <br />
+              A STAGE
+            </motion.h1>
 
-          {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={heroContentVisible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.7, delay: 0.65 }}
-            className="flex flex-col xs:flex-row gap-3 sm:gap-4"
-          >
-            {user && role ? (
-              <>
-                <Link
-                  to={role === "admin" ? "/admin" : role === "scout" ? "/scout/explore" : "/player/explore"}
-                  className="md:hidden"
-                >
-                  <Button size="lg" className="w-full font-bold text-base px-6 glow">
-                    Explore <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link
-                  to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"}
-                  className="hidden md:block"
-                >
-                  <Button size="lg" className="font-bold text-lg px-10 glow">
+            <motion.p initial={{ opacity: 0, y: 20 }} animate={heroReady ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.7, delay: 0.4 }}
+              className="text-base sm:text-lg text-white/70 max-w-lg mb-10 leading-relaxed">
+              The first platform connecting Bangladesh's grassroots football &amp; cricket talent with verified scouts.
+              Safe. Transparent. Built for you.
+            </motion.p>
+
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={heroReady ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.7, delay: 0.55 }}
+              className="flex flex-col xs:flex-row gap-3">
+              {user && role ? (
+                <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"}>
+                  <Button size="lg" className="font-bold text-lg px-10 animate-pulse-glow"
+                    style={{ background: "hsl(var(--green))", color: "hsl(0 0% 4%)" }}>
                     Go to Dashboard <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-              </>
-            ) : (
-              <>
-                <Link to="/auth">
-                  <Button
-                    size="lg"
-                    className="font-bold text-base sm:text-lg px-8 sm:px-10 glow animate-pulse-glow"
-                    style={{
-                      background: "hsl(var(--foreground))",
-                      color: "hsl(var(--background))",
-                    }}
-                  >
-                    Join as Player <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-                  </Button>
-                </Link>
-                <Link to="/auth?role=scout">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="font-semibold text-base sm:text-lg px-8 sm:px-10"
-                    style={{ borderColor: "hsl(var(--foreground)/0.2)" }}
-                  >
-                    I'm a Scout
-                  </Button>
-                </Link>
-              </>
-            )}
-          </motion.div>
-
-          {/* Scroll nudge */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.6 }}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1"
-          >
-            <span className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground/50">
-              Scroll
-            </span>
-            <motion.div
-              animate={{ y: [0, 6, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              <ChevronDown className="h-4 w-4 text-muted-foreground/30" />
+              ) : (
+                <>
+                  <Link to="/auth">
+                    <Button size="lg" className="font-bold text-base sm:text-lg px-8 sm:px-10 animate-pulse-glow"
+                      style={{ background: "hsl(var(--green))", color: "hsl(0 0% 4%)" }}>
+                      Join as Player <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                  <Link to="/auth?role=scout">
+                    <Button size="lg" variant="outline" className="font-semibold text-base sm:text-lg px-8 sm:px-10 text-white"
+                      style={{ borderColor: "rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}>
+                      I'm a Scout
+                    </Button>
+                  </Link>
+                </>
+              )}
             </motion.div>
+
+            {/* Mini stat pills */}
+            <motion.div initial={{ opacity: 0 }} animate={heroReady ? { opacity: 1 } : {}} transition={{ delay: 0.9 }}
+              className="flex flex-wrap gap-3 mt-8">
+              {[
+                { v: "2,500+", l: "Players" },
+                { v: "120+",   l: "Scouts" },
+                { v: "৳100",   l: "Registration" },
+                { v: "8",      l: "Divisions" },
+              ].map((s) => (
+                <div key={s.l} className="flex items-center gap-2 rounded-full px-3 py-1.5 border"
+                  style={{ background: "rgba(255,255,255,0.07)", borderColor: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)" }}>
+                  <span className="text-sm font-bold" style={{ color: "hsl(var(--green))" }}>{s.v}</span>
+                  <span className="text-xs text-white/60">{s.l}</span>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Right — floating cards */}
+          <div className="hidden lg:block relative w-80 h-96 flex-shrink-0">
+            <FloatingBadge icon={TrendingUp} label="Talents Discovered" value="340+ This Season" delay={0.8}
+              className="top-0 right-0" />
+            <FloatingBadge icon={Shield} label="Verified Scouts" value="120+ Active" delay={1.0}
+              className="top-28 left-0 animate-float-delayed" />
+            <FloatingBadge icon={MapPin} label="Divisions Covered" value="All 8 Divisions" delay={1.2}
+              className="bottom-8 right-4" />
+            <FloatingBadge icon={Star} label="Success Rate" value="94% Match Rate" delay={1.4}
+              className="bottom-32 left-6 animate-float-delayed" />
+          </div>
+        </motion.div>
+
+        {/* Scroll nudge */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1.5">
+          <span className="text-[10px] tracking-[0.25em] uppercase text-white/40">Scroll</span>
+          <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.4, repeat: Infinity }}>
+            <ChevronDown className="h-5 w-5 text-white/30" />
           </motion.div>
         </motion.div>
       </section>
 
       {/* ══════════════════════════════════════════
-          MARQUEE TICKER
+          MARQUEE
       ══════════════════════════════════════════ */}
       <MarqueeTicker />
 
       {/* ══════════════════════════════════════════
-          STATS BAR — live counters
+          LIVE STATS BAR
       ══════════════════════════════════════════ */}
-      <section className="py-12 border-t border-border relative overflow-hidden">
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, hsl(var(--foreground)/0.02), transparent)",
-          }}
-        />
+      <section className="py-16 border-t border-border relative overflow-hidden">
+        {/* Green ambient glow */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: "radial-gradient(ellipse 60% 80% at 50% 50%, hsl(142 76% 10% / 0.3) 0%, transparent 70%)"
+        }} />
         <div className="container">
           <div className="grid grid-cols-3 gap-4 sm:gap-8">
             {[
@@ -401,206 +280,188 @@ const Index = () => {
               { label: "Verified Scouts",    target: 120,  suffix: "+", Icon: Shield },
               { label: "Talent Discovered",  target: 340,  suffix: "+", Icon: Trophy },
             ].map((stat, i) => (
-              <RevealSection key={stat.label} delay={i * 0.1} className="text-center">
-                <div className="flex justify-center mb-2 sm:mb-3">
-                  <stat.Icon className="h-6 w-6 sm:h-7 sm:w-7 text-foreground/60" />
+              <Reveal key={stat.label} delay={i * 0.12} className="text-center group">
+                <div className="relative p-6 rounded-2xl border transition-all duration-300 card-hover"
+                  style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}>
+                  <div className="flex justify-center mb-3">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                      style={{ background: "hsl(var(--green) / 0.12)" }}>
+                      <stat.Icon className="h-5 w-5" style={{ color: "hsl(var(--green))" }} />
+                    </div>
+                  </div>
+                  <div className="font-display text-4xl sm:text-6xl mb-1" style={{ color: "hsl(var(--green))" }}>
+                    <Counter target={stat.target} suffix={stat.suffix} />
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">{stat.label}</div>
+                  {/* Bottom accent line */}
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 group-hover:w-full transition-all duration-500 rounded-full"
+                    style={{ background: "hsl(var(--green))" }} />
                 </div>
-                <div className="font-display text-3xl sm:text-5xl text-foreground">
-                  <Counter target={stat.target} suffix={stat.suffix} />
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground mt-1">
-                  {stat.label}
-                </div>
-              </RevealSection>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════
-          STORY — scroll-driven narrative chapters
+          HOW IT WORKS — 3 STEPS
       ══════════════════════════════════════════ */}
-      <section className="py-20 sm:py-32 border-t border-border relative overflow-hidden">
-        {/* Faint vertical timeline */}
-        <div
-          className="hidden sm:block absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(to bottom, transparent, hsl(var(--border)) 20%, hsl(var(--border)) 80%, transparent)",
-          }}
-        />
+      <section className="py-20 sm:py-32 border-t border-border overflow-hidden relative">
+        {/* Vertical timeline */}
+        <div className="hidden sm:block absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 pointer-events-none"
+          style={{ background: "linear-gradient(to bottom, transparent, hsl(var(--green) / 0.2) 20%, hsl(var(--green) / 0.2) 80%, transparent)" }} />
 
-        <div className="container space-y-28 sm:space-y-40">
+        <div className="container">
+          <Reveal className="text-center mb-16 sm:mb-24">
+            <span className="inline-block text-xs font-bold tracking-[0.2em] uppercase mb-4 px-4 py-1.5 rounded-full"
+              style={{ background: "hsl(var(--green) / 0.12)", color: "hsl(var(--green))" }}>
+              The Platform
+            </span>
+            <h2 className="font-display text-4xl sm:text-6xl text-foreground">HOW IT <span style={{ color: "hsl(var(--green))" }}>WORKS</span></h2>
+            <p className="text-muted-foreground mt-3 max-w-md mx-auto">Three simple steps from unknown talent to scouted athlete</p>
+          </Reveal>
 
-          {/* Chapter 1 — Create Profile */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-12">
-            <StoryChapter
-              number="01"
-              tag="Create Profile"
-              title="YOUR STORY STARTS HERE"
-              body="Sign up as a Player, add your details, select your sport — Football or Cricket. Your profile becomes your digital identity, visible to scouts across Bangladesh."
-              side="left"
-              accent="hsl(var(--foreground))"
-              icon={Users}
-            />
-            {/* Visual — holographic card mockup */}
-            <RevealSection delay={0.2} className="w-full max-w-xs sm:max-w-sm">
-              <div
-                className="relative rounded-2xl border p-6 overflow-hidden"
-                style={{
-                  borderColor: "hsl(var(--foreground)/0.08)",
-                  background: "hsl(var(--card))",
-                  boxShadow: "0 0 0 1px hsl(var(--foreground)/0.04), 0 30px 80px -20px rgba(0,0,0,0.8)",
-                }}
-              >
-                <div
-                  className="absolute top-0 inset-x-0 h-px"
-                  style={{
-                    background: "linear-gradient(90deg, transparent, hsl(var(--foreground)/0.3), transparent)",
-                  }}
-                />
+          <div className="space-y-24 sm:space-y-36">
+
+            {/* Step 1 */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-12">
+              <Reveal direction="left" className="flex-1 max-w-lg">
                 <div className="flex items-center gap-3 mb-5">
-                  <div
-                    className="w-12 h-12 rounded-full border flex items-center justify-center font-display text-xl"
-                    style={{
-                      borderColor: "hsl(var(--foreground)/0.2)",
-                      color: "hsl(var(--foreground)/0.7)",
-                    }}
-                  >
-                    R
+                  <span className="font-display text-7xl sm:text-8xl leading-none" style={{ color: "hsl(var(--green) / 0.15)" }}>01</span>
+                  <div className="h-px flex-1" style={{ background: "hsl(var(--green) / 0.2)" }} />
+                  <span className="text-xs font-bold tracking-[0.2em] uppercase px-3 py-1 rounded-full"
+                    style={{ background: "hsl(var(--green) / 0.12)", color: "hsl(var(--green))" }}>Create Profile</span>
+                </div>
+                <h3 className="font-display text-4xl sm:text-5xl text-foreground mb-4">YOUR STORY<br />STARTS HERE</h3>
+                <p className="text-muted-foreground leading-relaxed">Sign up as a Player, add your details, select your sport — Football or Cricket. Your profile becomes your digital identity, visible to scouts across Bangladesh.</p>
+                <div className="mt-6 flex gap-3">
+                  {["Football", "Cricket", "Athletics"].map((s) => (
+                    <span key={s} className="text-xs px-3 py-1 rounded-full border font-medium"
+                      style={{ borderColor: "hsl(var(--green) / 0.25)", color: "hsl(var(--green))", background: "hsl(var(--green) / 0.06)" }}>{s}</span>
+                  ))}
+                </div>
+              </Reveal>
+
+              {/* Player card mockup */}
+              <Reveal delay={0.2} direction="right" className="flex-1 max-w-sm w-full">
+                <motion.div whileHover={{ y: -6, rotateY: 3 }} transition={{ type: "spring", stiffness: 200 }}
+                  className="relative rounded-2xl border p-6 overflow-hidden card-3d"
+                  style={{ borderColor: "hsl(var(--green) / 0.2)", background: "hsl(var(--card))" }}>
+                  <div className="absolute top-0 inset-x-0 h-0.5" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--green) / 0.6), transparent)" }} />
+                  <div className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none"
+                    style={{ background: "radial-gradient(circle, hsl(var(--green) / 0.08) 0%, transparent 70%)" }} />
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="w-14 h-14 rounded-full border-2 flex items-center justify-center font-display text-2xl"
+                      style={{ borderColor: "hsl(var(--green) / 0.4)", background: "hsl(var(--green) / 0.08)", color: "hsl(var(--green))" }}>R</div>
+                    <div>
+                      <div className="font-semibold text-foreground">Rafiqul Islam</div>
+                      <div className="text-xs text-muted-foreground">Midfielder · Football · Dhaka</div>
+                    </div>
+                    <div className="ml-auto flex items-center gap-1 rounded-full px-2 py-0.5 border text-[10px] font-semibold"
+                      style={{ borderColor: "hsl(var(--green) / 0.3)", color: "hsl(var(--green))" }}>
+                      <Shield className="h-2.5 w-2.5" /> Live
+                    </div>
                   </div>
+                  {["Speed", "Dribbling", "Vision", "Positioning"].map((skill, j) => (
+                    <div key={skill} className="mb-3">
+                      <div className="flex justify-between text-[11px] mb-1">
+                        <span className="text-muted-foreground">{skill}</span>
+                        <span className="font-bold" style={{ color: "hsl(var(--green))" }}>{[88, 76, 91, 82][j]}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.07)" }}>
+                        <motion.div className="h-full rounded-full"
+                          style={{ background: "linear-gradient(90deg, hsl(var(--green)), hsl(142 76% 32%))" }}
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${[88, 76, 91, 82][j]}%` }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 1, delay: j * 0.1 }} />
+                      </div>
+                    </div>
+                  ))}
+                </motion.div>
+              </Reveal>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex flex-col sm:flex-row-reverse items-center justify-between gap-12">
+              <Reveal direction="right" className="flex-1 max-w-lg">
+                <div className="flex items-center gap-3 mb-5">
+                  <span className="font-display text-7xl sm:text-8xl leading-none" style={{ color: "hsl(var(--green) / 0.15)" }}>02</span>
+                  <div className="h-px flex-1" style={{ background: "hsl(var(--green) / 0.2)" }} />
+                  <span className="text-xs font-bold tracking-[0.2em] uppercase px-3 py-1 rounded-full"
+                    style={{ background: "hsl(var(--green) / 0.12)", color: "hsl(var(--green))" }}>Upload Highlights</span>
+                </div>
+                <h3 className="font-display text-4xl sm:text-5xl text-foreground mb-4">LET YOUR GAME<br />SPEAK</h3>
+                <p className="text-muted-foreground leading-relaxed">Record a 3-minute highlight video. Tag your position and traits. Pay ৳100 via bKash. Your reel goes live to hundreds of verified scouts instantly.</p>
+                <div className="mt-6 p-4 rounded-xl border flex items-center gap-4"
+                  style={{ borderColor: "hsl(var(--green) / 0.15)", background: "hsl(var(--green) / 0.05)" }}>
+                  <Zap className="h-8 w-8 flex-shrink-0" style={{ color: "hsl(var(--green))" }} />
                   <div>
-                    <div className="text-sm font-semibold text-foreground">Rafiqul Islam</div>
-                    <div className="text-xs text-muted-foreground">Midfielder · Football · Dhaka</div>
-                  </div>
-                  <div className="ml-auto">
-                    <div
-                      className="flex items-center gap-1 rounded-full px-2 py-0.5 border text-[10px] font-semibold"
-                      style={{
-                        borderColor: "hsl(var(--foreground)/0.2)",
-                        color: "hsl(var(--foreground)/0.6)",
-                      }}
-                    >
-                      <Shield className="h-2.5 w-2.5" /> Verified
-                    </div>
+                    <div className="text-sm font-bold text-foreground">Only ৳100</div>
+                    <div className="text-xs text-muted-foreground">One-time payment via bKash · Instantly live</div>
                   </div>
                 </div>
-                {["Speed", "Dribbling", "Vision", "Positioning"].map((skill, j) => (
-                  <div key={skill} className="mb-2">
-                    <div className="flex justify-between text-[10px] mb-1">
-                      <span className="text-muted-foreground">{skill}</span>
-                      <span className="text-foreground/60">{[88, 76, 91, 82][j]}</span>
-                    </div>
-                    <div className="h-1 rounded-full overflow-hidden" style={{ background: "hsl(var(--foreground)/0.08)" }}>
-                      <motion.div
-                        className="h-full rounded-full"
-                        style={{ background: "hsl(var(--foreground)/0.6)" }}
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${[88, 76, 91, 82][j]}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.8, delay: j * 0.1 }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </RevealSection>
-          </div>
+              </Reveal>
+              <Reveal delay={0.2} direction="left" className="flex-1 max-w-sm w-full">
+                <VideoHighlights />
+              </Reveal>
+            </div>
 
-          {/* Chapter 2 — Upload Highlights (with real video) */}
-          <div className="flex flex-col sm:flex-row-reverse items-center justify-between gap-12">
-            <StoryChapter
-              number="02"
-              tag="Upload Highlights"
-              title="LET YOUR GAME SPEAK"
-              body="Record a 3-minute highlight video. Tag your position and traits. Pay ৳100 via bKash. Your reel goes live to hundreds of verified scouts instantly."
-              side="right"
-              accent="hsl(var(--foreground)/0.7)"
-              icon={Play}
-            />
-            {/* Real looping video — autoplays on scroll */}
-            <RevealSection delay={0.2} className="w-full max-w-xs sm:max-w-sm">
-              <VideoHighlights />
-            </RevealSection>
-          </div>
-
-          {/* Chapter 3 — Get Discovered */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-12">
-            <StoryChapter
-              number="03"
-              tag="Get Discovered"
-              title="SCOUTS FIND YOU"
-              body="Verified scouts browse your profile, shortlist you, and reach out through our safe admin-mediated channel. No direct contact. No corruption. Pure merit."
-              side="left"
-              accent="hsl(var(--foreground)/0.5)"
-              icon={Trophy}
-            />
-            {/* Visual — scout dashboard mockup */}
-            <RevealSection delay={0.2} className="w-full max-w-xs sm:max-w-sm">
-              <div
-                className="relative rounded-2xl border p-4 overflow-hidden space-y-3"
-                style={{
-                  borderColor: "hsl(var(--foreground)/0.08)",
-                  background: "hsl(var(--card))",
-                  boxShadow: "0 0 0 1px hsl(var(--foreground)/0.04), 0 30px 80px -20px rgba(0,0,0,0.8)",
-                }}
-              >
-                <div
-                  className="absolute top-0 inset-x-0 h-px"
-                  style={{
-                    background: "linear-gradient(90deg, transparent, hsl(var(--foreground)/0.3), transparent)",
-                  }}
-                />
-                <div className="flex items-center gap-2 mb-3">
-                  <Shield className="h-4 w-4 text-foreground/50" />
-                  <span className="text-xs font-semibold text-foreground/70 tracking-widest uppercase">
-                    Scout Dashboard
-                  </span>
+            {/* Step 3 */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-12">
+              <Reveal direction="left" className="flex-1 max-w-lg">
+                <div className="flex items-center gap-3 mb-5">
+                  <span className="font-display text-7xl sm:text-8xl leading-none" style={{ color: "hsl(var(--green) / 0.15)" }}>03</span>
+                  <div className="h-px flex-1" style={{ background: "hsl(var(--green) / 0.2)" }} />
+                  <span className="text-xs font-bold tracking-[0.2em] uppercase px-3 py-1 rounded-full"
+                    style={{ background: "hsl(var(--green) / 0.12)", color: "hsl(var(--green))" }}>Get Discovered</span>
                 </div>
-                {[
-                  { name: "Rafiqul Islam", pos: "Midfielder",   score: 91 },
-                  { name: "Nusrat Jahan",  pos: "Forward",      score: 87 },
-                  { name: "Tanjim Ahmed",  pos: "All-rounder",  score: 84 },
-                ].map((p, j) => (
-                  <motion.div
-                    key={p.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: j * 0.15 }}
-                    className="flex items-center gap-3 p-2.5 rounded-xl border"
-                    style={{
-                      borderColor: "hsl(var(--foreground)/0.06)",
-                      background: "hsl(var(--foreground)/0.02)",
-                    }}
-                  >
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center font-display text-sm border"
-                      style={{ borderColor: "hsl(var(--foreground)/0.15)" }}
-                    >
-                      {p.name[0]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-semibold text-foreground truncate">{p.name}</div>
-                      <div className="text-[10px] text-muted-foreground">{p.pos}</div>
-                    </div>
-                    <div className="text-xs font-bold text-foreground/60">{p.score}</div>
-                    <div
-                      className="text-[9px] px-1.5 py-0.5 rounded border font-semibold text-foreground/50"
-                      style={{ borderColor: "hsl(var(--foreground)/0.12)" }}
-                    >
-                      ★ Shortlisted
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </RevealSection>
+                <h3 className="font-display text-4xl sm:text-5xl text-foreground mb-4">SCOUTS<br />FIND YOU</h3>
+                <p className="text-muted-foreground leading-relaxed">Verified scouts browse your profile, shortlist you, and reach out through our safe admin-mediated channel. No direct contact. No corruption. Pure merit.</p>
+              </Reveal>
+
+              {/* Scout dashboard mockup */}
+              <Reveal delay={0.2} direction="right" className="flex-1 max-w-sm w-full">
+                <motion.div whileHover={{ y: -6 }} transition={{ type: "spring", stiffness: 200 }}
+                  className="relative rounded-2xl border p-5 overflow-hidden"
+                  style={{ borderColor: "hsl(var(--green) / 0.2)", background: "hsl(var(--card))" }}>
+                  <div className="absolute top-0 inset-x-0 h-0.5" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--green) / 0.6), transparent)" }} />
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className="h-4 w-4" style={{ color: "hsl(var(--green))" }} />
+                    <span className="text-xs font-bold tracking-widest uppercase" style={{ color: "hsl(var(--green))" }}>Scout Dashboard</span>
+                  </div>
+                  {[
+                    { name: "Rafiqul Islam", pos: "Midfielder",  score: 91 },
+                    { name: "Nusrat Jahan",  pos: "Forward",     score: 87 },
+                    { name: "Tanjim Ahmed",  pos: "All-rounder", score: 84 },
+                  ].map((p, j) => (
+                    <motion.div key={p.name}
+                      initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }} transition={{ delay: j * 0.15 }}
+                      className="flex items-center gap-3 p-3 rounded-xl border mb-2 last:mb-0"
+                      style={{ borderColor: "hsl(var(--foreground) / 0.06)", background: "hsl(var(--foreground) / 0.02)" }}>
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center font-display text-sm border"
+                        style={{ borderColor: "hsl(var(--green) / 0.25)", background: "hsl(var(--green) / 0.06)", color: "hsl(var(--green))" }}>
+                        {p.name[0]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-semibold text-foreground truncate">{p.name}</div>
+                        <div className="text-[10px] text-muted-foreground">{p.pos}</div>
+                      </div>
+                      <div className="text-sm font-bold" style={{ color: "hsl(var(--green))" }}>{p.score}</div>
+                      <div className="text-[9px] px-2 py-1 rounded-full font-semibold"
+                        style={{ background: "hsl(var(--green) / 0.12)", color: "hsl(var(--green))" }}>★ Shortlisted</div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </Reveal>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════
-          MARQUEE TICKER #2 (between story & map)
+          MARQUEE #2
       ══════════════════════════════════════════ */}
       <MarqueeTicker />
 
@@ -614,185 +475,116 @@ const Index = () => {
       ══════════════════════════════════════════ */}
       <section className="py-16 sm:py-24 border-t border-border">
         <div className="container">
-          <RevealSection className="text-center mb-10 sm:mb-14">
-            <h2 className="font-display text-3xl sm:text-5xl text-foreground mb-2">
-              OUR VERIFIED SCOUTS
+          <Reveal className="text-center mb-12">
+            <span className="inline-block text-xs font-bold tracking-[0.2em] uppercase mb-4 px-4 py-1.5 rounded-full"
+              style={{ background: "hsl(var(--green) / 0.12)", color: "hsl(var(--green))" }}>Our Network</span>
+            <h2 className="font-display text-3xl sm:text-5xl text-foreground">
+              VERIFIED <span style={{ color: "hsl(var(--green))" }}>SCOUTS</span>
             </h2>
-            <p className="text-sm sm:text-base text-muted-foreground max-w-lg mx-auto">
+            <p className="text-sm sm:text-base text-muted-foreground max-w-lg mx-auto mt-2">
               These professionals are actively discovering talent across Bangladesh
             </p>
-          </RevealSection>
+          </Reveal>
 
           {verifiedScouts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
               {verifiedScouts.map((scout, i) => (
-                <RevealSection key={scout.user_id} delay={i * 0.07}>
-                  <div
-                    className="group rounded-2xl border p-5 flex flex-col items-center text-center gap-3 transition-all duration-300 hover:border-foreground/20"
-                    style={{
-                      background: "hsl(var(--card))",
-                      borderColor: "hsl(var(--border))",
-                    }}
-                  >
-                    <div
-                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:border-foreground/30"
-                      style={{
-                        borderColor: "hsl(var(--foreground)/0.12)",
-                        background: "hsl(var(--foreground)/0.04)",
-                      }}
-                    >
+                <Reveal key={scout.user_id} delay={i * 0.07}>
+                  <motion.div whileHover={{ y: -5, scale: 1.02 }} transition={{ type: "spring", stiffness: 300 }}
+                    className="group rounded-2xl border p-5 flex flex-col items-center text-center gap-3 card-hover"
+                    style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}>
+                    <div className="w-16 h-16 rounded-full border-2 flex items-center justify-center overflow-hidden"
+                      style={{ borderColor: "hsl(var(--green) / 0.2)", background: "hsl(var(--green) / 0.06)" }}>
                       {scout.avatar_url ? (
-                        <img
-                          src={scout.avatar_url}
-                          alt={scout.full_name}
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={scout.avatar_url} alt={scout.full_name} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="font-display text-2xl text-foreground/60">
+                        <span className="font-display text-2xl" style={{ color: "hsl(var(--green))" }}>
                           {scout.full_name.charAt(0).toUpperCase()}
                         </span>
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-foreground leading-tight">
-                        {scout.full_name}
-                      </p>
-                      {scout.organization && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {scout.organization}
-                        </p>
-                      )}
+                      <p className="text-sm font-semibold text-foreground leading-tight">{scout.full_name}</p>
+                      {scout.organization && <p className="text-xs text-muted-foreground mt-0.5">{scout.organization}</p>}
                     </div>
-                    <div
-                      className="flex items-center gap-1.5 rounded-full px-2.5 py-1 border"
-                      style={{
-                        borderColor: "hsl(var(--foreground)/0.12)",
-                        background: "hsl(var(--foreground)/0.04)",
-                      }}
-                    >
-                      <Shield className="h-3 w-3 text-foreground/50" />
-                      <span className="text-xs text-foreground/60 font-medium">Verified</span>
+                    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 border text-xs font-medium"
+                      style={{ borderColor: "hsl(var(--green) / 0.2)", color: "hsl(var(--green))", background: "hsl(var(--green) / 0.07)" }}>
+                      <Shield className="h-3 w-3" /> Verified
                     </div>
-                  </div>
-                </RevealSection>
+                  </motion.div>
+                </Reveal>
               ))}
             </div>
           ) : (
-            <p className="text-center text-muted-foreground text-sm">
-              No verified scouts listed yet.
-            </p>
+            <p className="text-center text-muted-foreground text-sm py-12">No verified scouts listed yet.</p>
           )}
         </div>
       </section>
 
       {/* ══════════════════════════════════════════
-          SOCIAL MEDIA
+          CINEMATIC CTA
       ══════════════════════════════════════════ */}
-      <section className="py-12 sm:py-16 border-t border-border">
-        <div className="container">
-          <RevealSection className="text-center mb-8">
-            <h2 className="font-display text-3xl sm:text-4xl text-foreground mb-2">
-              FOLLOW THE JOURNEY
+      <section className="py-24 sm:py-36 border-t border-border relative overflow-hidden">
+        {/* Background */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: "radial-gradient(ellipse 80% 60% at 50% 50%, hsl(142 76% 8% / 0.6) 0%, transparent 70%)"
+        }} />
+        <div className="absolute inset-x-0 top-0 h-px accent-line" />
+        <div className="absolute inset-x-0 bottom-0 h-px accent-line" />
+        {/* Animated grid */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.04]"
+          style={{ backgroundImage: "linear-gradient(hsl(var(--green)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--green)) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
+
+        <div className="container relative z-10 text-center">
+          <Reveal>
+            <motion.div animate={{ scale: [1, 1.03, 1] }} transition={{ duration: 3, repeat: Infinity }}>
+              <span className="inline-block text-xs font-bold tracking-[0.2em] uppercase mb-6 px-4 py-1.5 rounded-full"
+                style={{ background: "hsl(var(--green) / 0.12)", color: "hsl(var(--green))" }}>Ready to Shine</span>
+            </motion.div>
+            <h2 className="font-display text-5xl sm:text-7xl lg:text-9xl text-foreground mb-6 leading-none">
+              YOUR MOMENT<br />
+              <span style={{ color: "hsl(var(--green))" }}>STARTS NOW</span>
             </h2>
-            <p className="text-sm sm:text-base text-muted-foreground">
-              Stay connected with Scout BD across all platforms
+            <p className="text-muted-foreground max-w-xl mx-auto mb-10 text-base sm:text-lg">
+              Join thousands of players who have already uploaded their highlights. Scouts are watching.
             </p>
-          </RevealSection>
-          <div className="flex justify-center gap-6 sm:gap-8 flex-wrap">
-            {socialLinks.map(({ Icon, label, href, color }, i) => (
-              <motion.a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                whileHover={{ y: -4, scale: 1.06 }}
-                whileTap={{ scale: 0.95 }}
-                className={`flex flex-col items-center gap-2 text-muted-foreground transition-colors duration-200 ${color}`}
-              >
-                <div
-                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border flex items-center justify-center transition-all duration-200 hover:border-foreground/20"
-                  style={{
-                    borderColor: "hsl(var(--border))",
-                    background: "hsl(var(--card))",
-                  }}
-                >
-                  <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
-                </div>
-                <span className="text-xs font-medium">{label}</span>
-              </motion.a>
-            ))}
-          </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/auth">
+                <Button size="lg" className="font-bold text-lg px-12 py-6 animate-pulse-glow"
+                  style={{ background: "hsl(var(--green))", color: "hsl(0 0% 4%)" }}>
+                  Join Scout BD Free <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/mission">
+                <Button size="lg" variant="outline" className="font-semibold text-lg px-10 py-6"
+                  style={{ borderColor: "hsl(var(--green) / 0.3)", color: "hsl(var(--green))" }}>
+                  Our Mission
+                </Button>
+              </Link>
+            </div>
+          </Reveal>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════
-          CTA — cinematic finale
+          FOOTER SOCIAL
       ══════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-40 border-t border-border overflow-hidden">
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse 60% 70% at 50% 50%, hsl(var(--foreground)/0.05) 0%, transparent 65%)",
-          }}
-        />
-        {/* ambient radial only */}
-
-        <div className="container text-center relative z-10">
-          <RevealSection>
-            <motion.div
-              animate={{ opacity: [0.3, 0.7, 0.3] }}
-              transition={{ duration: 4, repeat: Infinity }}
-              className="font-display text-[clamp(1rem,3vw,1.5rem)] tracking-[0.3em] uppercase text-muted-foreground/40 mb-4"
-            >
-              Your moment is now
-            </motion.div>
-            <h2
-              className="font-display leading-[0.88] text-foreground mb-6"
-              style={{ fontSize: "clamp(3rem, 10vw, 8rem)" }}
-            >
-              READY TO{" "}
-              <span
-                style={{
-                  WebkitTextStroke: "1px hsl(var(--foreground)/0.5)",
-                  color: "transparent",
-                }}
-              >
-                SHINE?
-              </span>
-            </h2>
-            <p className="text-sm sm:text-lg text-muted-foreground mb-10 max-w-md mx-auto">
-              Join thousands of young athletes across Bangladesh. Your breakthrough starts here.
-            </p>
-            {!user && (
-              <Link to="/auth">
-                <motion.div whileTap={{ scale: 0.96 }} className="inline-block">
-                  <Button
-                    size="lg"
-                    className="font-bold text-base sm:text-lg px-10 sm:px-14 py-6 animate-pulse-glow"
-                    style={{
-                      background: "hsl(var(--foreground))",
-                      color: "hsl(var(--background))",
-                      fontSize: "1rem",
-                    }}
-                  >
-                    Start Your Journey <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </motion.div>
-              </Link>
-            )}
-            {user && role && (
-              <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"}>
-                <Button size="lg" className="font-bold text-lg px-10 glow">
-                  Go to Dashboard <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-            )}
-          </RevealSection>
+      <section className="py-16 border-t border-border">
+        <div className="container text-center">
+          <Reveal>
+            <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-6">Follow the Journey</p>
+            <div className="flex justify-center gap-5">
+              {socialLinks.map(({ Icon, label, href, color }) => (
+                <motion.a key={label} href={href} target="_blank" rel="noopener noreferrer"
+                  whileHover={{ scale: 1.2, y: -4 }} transition={{ type: "spring", stiffness: 400 }}
+                  className={`text-muted-foreground transition-colors duration-200 ${color}`}
+                  aria-label={label}>
+                  <Icon className="h-5 w-5" />
+                </motion.a>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground/40 mt-8">© 2025 Scout BD. All rights reserved.</p>
+          </Reveal>
         </div>
       </section>
     </div>
