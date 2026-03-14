@@ -345,7 +345,7 @@
 
     "@splinetool/react-spline": ["@splinetool/react-spline@4.1.0", "", { "dependencies": { "blurhash": "2.0.5", "lodash.debounce": "4.0.8", "react-merge-refs": "2.1.1", "thumbhash": "0.1.1" }, "peerDependencies": { "@splinetool/runtime": "*", "next": ">=14.2.0", "react": "*", "react-dom": "*" }, "optionalPeers": ["next"] }, "sha512-Y379gm17gw+1nxT/YXTCJnVIWuu7tsUH1tp/YxsYb0pZnc9Gljk7Om4Kpq7WPq0bZ4zidVCxf6xn6jgDcbHifQ=="],
 
-    "@splinetool/runtime": ["@splinetool/runtime@1.12.67", "", { "dependencies": { "on-change": "4.0.0", "semver-compare": "1.0.0" } }, "sha512-jKE5asBgqTlYkOgdUDXUAbiCenPTP3hnb4RaeO8YUZLPlUB4RFlxx579n79I/0wS/alBqv6C06h3Csclc+IwQg=="],
+    "@splinetool/runtime": ["@splinetool/runtime@1.12.69", "", { "dependencies": { "on-change": "4.0.0", "semver-compare": "1.0.0" } }, "sha512-VwSFXJaAynENQGt2cH/xyyT+ngl10SNK7oa+QPcfV91LCJ7krr3p9JUXaBy0omDG9tKZm8sxxMKYrCNX7q4R/Q=="],
 
     "@supabase/auth-js": ["@supabase/auth-js@2.95.3", "", { "dependencies": { "tslib": "2.8.1" } }, "sha512-vD2YoS8E2iKIX0F7EwXTmqhUpaNsmbU6X2R0/NdFcs02oEfnHyNP/3M716f3wVJ2E5XHGiTFXki6lRckhJ0Thg=="],
 
