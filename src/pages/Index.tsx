@@ -527,12 +527,12 @@ const Index = () => {
       <section className="py-24 sm:py-36 border-t border-border relative overflow-hidden">
         {/* Background */}
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% 50%, hsl(142 76% 8% / 0.6) 0%, transparent 70%)"
+          background: "radial-gradient(ellipse 80% 60% at 50% 50%, hsl(var(--green) / 0.07) 0%, transparent 70%)"
         }} />
         <div className="absolute inset-x-0 top-0 h-px accent-line" />
         <div className="absolute inset-x-0 bottom-0 h-px accent-line" />
         {/* Animated grid */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.04]"
+        <div className="absolute inset-0 pointer-events-none opacity-[0.035]"
           style={{ backgroundImage: "linear-gradient(hsl(var(--green)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--green)) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
 
         <div className="container relative z-10 text-center">
@@ -551,7 +551,7 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/auth">
                 <Button size="lg" className="font-bold text-lg px-12 py-6 animate-pulse-glow"
-                  style={{ background: "hsl(var(--green))", color: "hsl(0 0% 4%)" }}>
+                  style={{ background: "hsl(var(--green))", color: "hsl(var(--primary-foreground))" }}>
                   Join Scout BD Free <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
