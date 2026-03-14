@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Zap, LogOut, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,27 @@ const navLinks = [
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const lastScrollY = useRef(0);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, role, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    const onScroll = () => {
+      const current = window.scrollY;
+      // hide when scrolling down past 80px, show when scrolling up
+      if (current > 80 && current > lastScrollY.current) {
+        setHidden(true);
+      } else {
+        setHidden(false);
+      }
+      lastScrollY.current = current;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -27,7 +44,11 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-transparent">
+    <motion.nav
+      className="fixed top-0 left-0 right-0 z-50 bg-transparent"
+      animate={{ y: hidden ? "-100%" : "0%" }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+    >
       <div className="container flex items-center justify-between h-16 gap-4">
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <Zap className="h-6 w-6 text-primary" />
@@ -105,45 +126,45 @@ const Navbar = () => {
             style={{ background: "hsl(var(--background) / 0.95)", backdropFilter: "blur(16px)" }}
           >
             <div className="container py-4 flex flex-col gap-3">
-            {navLinks.map((l) => (
-              <Link
-                key={l.path}
-                to={l.path}
-                onClick={() => setOpen(false)}
-                className={`text-sm font-medium py-2 ${
-                  location.pathname === l.path ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
-                {l.label}
-              </Link>
-            ))}
-            {user ? (
-              <>
-                <div className="flex items-center gap-2">
-                  <NotificationBell />
-                  <span className="text-sm text-muted-foreground">Notifications</span>
-                </div>
-                <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"} onClick={() => setOpen(false)}>
-                  <Button size="sm" variant="outline" className="w-full border-primary/40 text-primary">
-                    Dashboard
+              {navLinks.map((l) => (
+                <Link
+                  key={l.path}
+                  to={l.path}
+                  onClick={() => setOpen(false)}
+                  className={`text-sm font-medium py-2 ${
+                    location.pathname === l.path ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              ))}
+              {user ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <NotificationBell />
+                    <span className="text-sm text-muted-foreground">Notifications</span>
+                  </div>
+                  <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"} onClick={() => setOpen(false)}>
+                    <Button size="sm" variant="outline" className="w-full border-primary/40 text-primary">
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Button size="sm" variant="ghost" onClick={() => { handleSignOut(); setOpen(false); }} className="text-muted-foreground">
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <Link to="/auth" onClick={() => setOpen(false)}>
+                  <Button size="sm" className="w-full bg-primary text-primary-foreground font-semibold">
+                    Get Started
                   </Button>
                 </Link>
-                <Button size="sm" variant="ghost" onClick={() => { handleSignOut(); setOpen(false); }} className="text-muted-foreground">
-                  Sign Out
-                </Button>
-              </>
-            ) : (
-              <Link to="/auth" onClick={() => setOpen(false)}>
-                <Button size="sm" className="w-full bg-primary text-primary-foreground font-semibold">
-                  Get Started
-                </Button>
-              </Link>
-            )}
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </nav>
+    </motion.nav>
   );
 };
 
