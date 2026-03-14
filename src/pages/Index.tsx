@@ -98,56 +98,71 @@ const Index = () => {
     <div className="min-h-screen overflow-x-hidden bg-background">
 
       {/* ══════════════════════════════════════════
-          HERO — split: glass text left, video right
+          HERO — full-bleed video, liquid glass card
       ══════════════════════════════════════════ */}
-      <section ref={heroRef} className="relative min-h-screen flex items-stretch overflow-hidden">
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-start overflow-hidden">
 
-        {/* ── FULL-BLEED VIDEO (sits behind everything, right half visible) ── */}
-        <motion.div
-          className="absolute inset-0 z-0"
-          style={{ y: videoY, scale: videoScale }}
-        >
+        {/* ── FULL-BLEED VIDEO — fills entire hero ── */}
+        <motion.div className="absolute inset-0 z-0" style={{ y: videoY, scale: videoScale }}>
           <video
             autoPlay loop muted playsInline preload="auto"
             className="absolute inset-0 w-full h-full object-cover"
           >
             <source src={heroVideo} type="video/mp4" />
           </video>
+          {/* Very subtle vignette only at extreme edges — keeps video visible */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: "radial-gradient(ellipse 120% 100% at 50% 50%, transparent 55%, rgba(0,0,0,0.45) 100%)"
+          }} />
         </motion.div>
 
         {/* ── Bottom fade into page ── */}
         <div className="absolute bottom-0 left-0 right-0 z-[3] pointer-events-none" style={{
-          height: "25%",
+          height: "28%",
           background: "linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%)"
         }} />
 
-        {/* ── GLASS PANEL (left ~55%) — iOS-style, edges dissolve ── */}
+        {/* ── LIQUID GLASS CARD — floats over video, iOS-style ── */}
         <motion.div
           style={{ opacity: heroOpacity }}
-          className="relative z-10 w-full lg:w-[58%] flex items-center min-h-screen"
+          className="relative z-10 container pt-28 pb-24 flex items-center"
         >
-          {/* The frosted glass surface — no hard border, mask fades right edge */}
-          <div
-            className="absolute inset-0"
+          <motion.div
+            initial={{ opacity: 0, y: 30, scale: 0.97 }}
+            animate={heroReady ? { opacity: 1, y: 0, scale: 1 } : {}}
+            transition={{ duration: 0.9, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="relative max-w-xl w-full rounded-3xl overflow-hidden p-8 sm:p-12"
             style={{
-              background: "hsl(var(--background) / 0.78)",
-              backdropFilter: "blur(32px) saturate(180%)",
-              WebkitBackdropFilter: "blur(32px) saturate(180%)",
-              WebkitMaskImage: "linear-gradient(to right, hsl(0 0% 0%) 0%, hsl(0 0% 0%) 60%, transparent 100%)",
-              maskImage: "linear-gradient(to right, hsl(0 0% 0%) 0%, hsl(0 0% 0%) 60%, transparent 100%)",
+              /* iOS liquid glass: near-transparent with heavy blur */
+              background: "rgba(255,255,255,0.12)",
+              backdropFilter: "blur(48px) saturate(200%) brightness(1.08)",
+              WebkitBackdropFilter: "blur(48px) saturate(200%) brightness(1.08)",
+              /* Specular rim — very faint white border that fades on bottom-right */
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.45), inset 1px 0 0 rgba(255,255,255,0.2), 0 24px 80px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.12)",
+              border: "1px solid rgba(255,255,255,0.22)",
+              /* Soft bottom/right edge dissolve via gradient border trick */
+              WebkitMaskImage: "radial-gradient(ellipse 110% 105% at 30% 40%, black 60%, rgba(0,0,0,0.92) 75%, rgba(0,0,0,0.6) 88%, transparent 100%)",
+              maskImage: "radial-gradient(ellipse 110% 105% at 30% 40%, black 60%, rgba(0,0,0,0.92) 75%, rgba(0,0,0,0.6) 88%, transparent 100%)",
             }}
-          />
+          >
+            {/* Specular highlight streak across top-left (depth effect) */}
+            <div className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{
+              background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.7) 30%, rgba(255,255,255,0.3) 60%, transparent 100%)"
+            }} />
+            <div className="absolute top-0 left-0 bottom-0 w-px pointer-events-none" style={{
+              background: "linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.15) 50%, transparent 100%)"
+            }} />
 
-          <div className="relative z-10 container lg:pl-8 xl:pl-16 pt-28 pb-24 pr-16 lg:pr-24">
             {/* Live badge */}
             <motion.div
-              initial={{ opacity: 0, x: -30 }}
+              initial={{ opacity: 0, x: -20 }}
               animate={heroReady ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="inline-flex items-center gap-2.5 rounded-full px-4 py-2 mb-7 border"
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="inline-flex items-center gap-2.5 rounded-full px-4 py-2 mb-7"
               style={{
-                background: "hsl(var(--green) / 0.1)",
-                borderColor: "hsl(var(--green) / 0.3)",
+                background: "rgba(255,255,255,0.15)",
+                border: "1px solid rgba(255,255,255,0.3)",
+                backdropFilter: "blur(8px)",
               }}
             >
               <motion.span
@@ -163,16 +178,16 @@ const Index = () => {
 
             {/* Main headline */}
             <motion.h1
-              initial={{ opacity: 0, y: 50 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={heroReady ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="font-display leading-[0.88] text-foreground mb-6"
-              style={{ fontSize: "clamp(3.4rem, 9vw, 7.5rem)" }}
+              transition={{ duration: 0.9, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="font-display leading-[0.88] mb-6"
+              style={{ fontSize: "clamp(3rem, 8vw, 6.5rem)", color: "rgba(255,255,255,0.96)" }}
             >
               YOUR TALENT
               <br />
               <span style={{
-                backgroundImage: "linear-gradient(135deg, hsl(var(--green)), hsl(var(--green-glow)))",
+                backgroundImage: "linear-gradient(135deg, hsl(var(--green)), hsl(142 90% 65%))",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -184,25 +199,26 @@ const Index = () => {
             </motion.h1>
 
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={heroReady ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.7, delay: 0.4 }}
-              className="text-base sm:text-lg text-muted-foreground max-w-lg mb-10 leading-relaxed"
+              transition={{ duration: 0.7, delay: 0.5 }}
+              className="text-base sm:text-lg mb-10 leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.72)" }}
             >
               The first platform connecting Bangladesh's grassroots football &amp; cricket talent
               with verified scouts. Safe. Transparent. Built for you.
             </motion.p>
 
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={heroReady ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.7, delay: 0.55 }}
+              transition={{ duration: 0.7, delay: 0.62 }}
               className="flex flex-col xs:flex-row gap-3"
             >
               {user && role ? (
                 <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"}>
                   <Button size="lg" className="font-bold text-lg px-10 animate-pulse-glow"
-                    style={{ background: "hsl(var(--green))", color: "hsl(var(--primary-foreground))" }}>
+                    style={{ background: "hsl(var(--green))", color: "#fff" }}>
                     Go to Dashboard <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
@@ -210,12 +226,13 @@ const Index = () => {
                 <>
                   <Link to="/auth">
                     <Button size="lg" className="font-bold text-base sm:text-lg px-8 sm:px-10 animate-pulse-glow"
-                      style={{ background: "hsl(var(--green))", color: "hsl(var(--primary-foreground))" }}>
+                      style={{ background: "hsl(var(--green))", color: "#fff" }}>
                       Join as Player <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>
                   <Link to="/auth?role=scout">
-                    <Button size="lg" variant="outline" className="font-semibold text-base sm:text-lg px-8 sm:px-10">
+                    <Button size="lg" className="font-semibold text-base sm:text-lg px-8 sm:px-10"
+                      style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)" }}>
                       I'm a Scout
                     </Button>
                   </Link>
@@ -223,7 +240,7 @@ const Index = () => {
               )}
             </motion.div>
 
-            {/* Mini stat pills */}
+            {/* Stat pills */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={heroReady ? { opacity: 1 } : {}}
@@ -236,14 +253,14 @@ const Index = () => {
                 { v: "৳100",   l: "Registration" },
                 { v: "8",      l: "Divisions" },
               ].map((s) => (
-                <div key={s.l} className="flex items-center gap-2 rounded-full px-3 py-1.5 border"
-                  style={{ background: "hsl(var(--muted) / 0.6)", borderColor: "hsl(var(--border))" }}>
+                <div key={s.l} className="flex items-center gap-2 rounded-full px-3 py-1.5"
+                  style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)" }}>
                   <span className="text-sm font-bold" style={{ color: "hsl(var(--green))" }}>{s.v}</span>
-                  <span className="text-xs text-muted-foreground">{s.l}</span>
+                  <span className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>{s.l}</span>
                 </div>
               ))}
             </motion.div>
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Scroll nudge */}
@@ -253,9 +270,9 @@ const Index = () => {
           transition={{ delay: 2 }}
           className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1.5"
         >
-          <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground/50">Scroll</span>
+          <span className="text-[10px] tracking-[0.25em] uppercase" style={{ color: "rgba(255,255,255,0.35)" }}>Scroll</span>
           <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.4, repeat: Infinity }}>
-            <ChevronDown className="h-5 w-5 text-muted-foreground/40" />
+            <ChevronDown className="h-5 w-5" style={{ color: "rgba(255,255,255,0.3)" }} />
           </motion.div>
         </motion.div>
       </section>
