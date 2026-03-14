@@ -92,21 +92,23 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        {showIntro ? (
-          <LoadingIntro onDone={handleIntroDone} />
-        ) : (
-          <BrowserRouter>
-            <AuthProvider>
-              <Navbar />
-              <AnimatedRoutes />
-              <MobileBottomNav />
-            </AuthProvider>
-          </BrowserRouter>
-        )}
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          {showIntro ? (
+            <LoadingIntro onDone={handleIntroDone} />
+          ) : (
+            <BrowserRouter>
+              <AuthProvider>
+                <Navbar />
+                <AnimatedRoutes />
+                <MobileBottomNav />
+              </AuthProvider>
+            </BrowserRouter>
+          )}
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };
