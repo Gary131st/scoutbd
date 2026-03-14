@@ -271,7 +271,7 @@ const Index = () => {
       <section className="py-16 border-t border-border relative overflow-hidden">
         {/* Green ambient glow */}
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse 60% 80% at 50% 50%, hsl(142 76% 10% / 0.3) 0%, transparent 70%)"
+          background: "radial-gradient(ellipse 60% 80% at 50% 50%, hsl(var(--green) / 0.08) 0%, transparent 70%)"
         }} />
         <div className="container">
           <div className="grid grid-cols-3 gap-4 sm:gap-8">
