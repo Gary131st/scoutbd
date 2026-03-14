@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   ArrowRight, Users, Shield, Trophy, Twitter, Facebook,
-  Instagram, Youtube, Play, ChevronDown, Star, Zap, MapPin, TrendingUp
+  Instagram, Youtube, ChevronDown, Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,10 +14,10 @@ import VideoHighlights from "@/components/VideoHighlights";
 import heroVideo from "@/assets/hero-sports.mp4";
 
 const socialLinks = [
-  { Icon: Facebook,  label: "Facebook",    href: "https://facebook.com/scoutbd",  color: "hover:text-blue-400" },
-  { Icon: Twitter,   label: "Twitter / X", href: "https://twitter.com/scoutbd",   color: "hover:text-sky-400" },
-  { Icon: Instagram, label: "Instagram",   href: "https://instagram.com/scoutbd", color: "hover:text-pink-400" },
-  { Icon: Youtube,   label: "YouTube",     href: "https://youtube.com/@scoutbd",  color: "hover:text-red-400" },
+  { Icon: Facebook,  label: "Facebook",    href: "https://facebook.com/scoutbd",  color: "hover:text-blue-500" },
+  { Icon: Twitter,   label: "Twitter / X", href: "https://twitter.com/scoutbd",   color: "hover:text-sky-500" },
+  { Icon: Instagram, label: "Instagram",   href: "https://instagram.com/scoutbd", color: "hover:text-pink-500" },
+  { Icon: Youtube,   label: "YouTube",     href: "https://youtube.com/@scoutbd",  color: "hover:text-red-500" },
 ];
 
 type ScoutProfile = {
@@ -62,29 +62,6 @@ function Reveal({ children, delay = 0, className = "", direction = "up" }: {
   );
 }
 
-/* ── Floating badge pill ── */
-function FloatingBadge({ icon: Icon, label, value, delay = 0, className = "" }: {
-  icon: React.ElementType; label: string; value: string; delay?: number; className?: string;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.6, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
-      className={`absolute glass-green rounded-2xl px-4 py-3 flex items-center gap-3 animate-float ${className}`}
-      style={{ animationDelay: `${delay}s` }}
-    >
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--green) / 0.2)" }}>
-        <Icon className="h-4 w-4" style={{ color: "hsl(var(--green))" }} />
-      </div>
-      <div>
-        <div className="text-xs text-muted-foreground leading-none mb-0.5">{label}</div>
-        <div className="text-sm font-bold text-foreground leading-none">{value}</div>
-      </div>
-    </motion.div>
-  );
-}
-
 /* ════════════════════════════════════════════
    PAGE
 ════════════════════════════════════════════ */
@@ -96,8 +73,8 @@ const Index = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-  const heroY       = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
-  const heroScale   = useTransform(scrollYProgress, [0, 0.7], [1, 1.06]);
+  const videoY      = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
+  const videoScale  = useTransform(scrollYProgress, [0, 0.7], [1, 1.06]);
 
   useEffect(() => {
     const fetchScouts = async () => {
@@ -121,83 +98,111 @@ const Index = () => {
     <div className="min-h-screen overflow-x-hidden bg-background">
 
       {/* ══════════════════════════════════════════
-          HERO — full-bleed sports video
+          HERO — split: glass text left, video right
       ══════════════════════════════════════════ */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section ref={heroRef} className="relative min-h-screen flex items-stretch overflow-hidden">
 
-        {/* ── VIDEO LAYER ── */}
-        <motion.div className="absolute inset-0 z-0" style={{ y: heroY, scale: heroScale }}>
+        {/* ── FULL-BLEED VIDEO (sits behind everything, right half visible) ── */}
+        <motion.div
+          className="absolute inset-0 z-0"
+          style={{ y: videoY, scale: videoScale }}
+        >
           <video
             autoPlay loop muted playsInline preload="auto"
             className="absolute inset-0 w-full h-full object-cover"
           >
             <source src={heroVideo} type="video/mp4" />
           </video>
-          {/* Lighter overlay — video must be visible */}
-          <div className="absolute inset-0" style={{
-            background: "linear-gradient(160deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.55) 100%)"
-          }} />
-          {/* Green tint accent at bottom-left */}
-          <div className="absolute bottom-0 left-0 w-2/3 h-2/3 pointer-events-none" style={{
-            background: "radial-gradient(ellipse at bottom left, hsl(142 76% 20% / 0.35) 0%, transparent 65%)"
-          }} />
         </motion.div>
 
-        {/* ── Bottom fade-into-page ── */}
-        <div className="absolute bottom-0 left-0 right-0 z-[2] pointer-events-none" style={{
-          height: "30%",
+        {/* ── Bottom fade into page ── */}
+        <div className="absolute bottom-0 left-0 right-0 z-[3] pointer-events-none" style={{
+          height: "25%",
           background: "linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%)"
         }} />
 
-        {/* ── HERO CONTENT ── */}
-        <motion.div style={{ opacity: heroOpacity }}
-          className="container relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12 pt-28 pb-24">
+        {/* ── GLASS PANEL (left ~55%) — iOS-style, edges dissolve ── */}
+        <motion.div
+          style={{ opacity: heroOpacity }}
+          className="relative z-10 w-full lg:w-[58%] flex items-center min-h-screen"
+        >
+          {/* The frosted glass surface — no hard border, mask fades right edge */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: "hsl(var(--background) / 0.78)",
+              backdropFilter: "blur(32px) saturate(180%)",
+              WebkitBackdropFilter: "blur(32px) saturate(180%)",
+              WebkitMaskImage: "linear-gradient(to right, hsl(0 0% 0%) 0%, hsl(0 0% 0%) 60%, transparent 100%)",
+              maskImage: "linear-gradient(to right, hsl(0 0% 0%) 0%, hsl(0 0% 0%) 60%, transparent 100%)",
+            }}
+          />
 
-          {/* Left — headline */}
-          <div className="flex-1 max-w-2xl">
+          <div className="relative z-10 container lg:pl-8 xl:pl-16 pt-28 pb-24 pr-16 lg:pr-24">
             {/* Live badge */}
-            <motion.div initial={{ opacity: 0, x: -30 }} animate={heroReady ? { opacity: 1, x: 0 } : {}}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={heroReady ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.6, delay: 0.1 }}
               className="inline-flex items-center gap-2.5 rounded-full px-4 py-2 mb-7 border"
-              style={{ background: "hsl(142 76% 10% / 0.7)", borderColor: "hsl(var(--green) / 0.4)", backdropFilter: "blur(12px)" }}
+              style={{
+                background: "hsl(var(--green) / 0.1)",
+                borderColor: "hsl(var(--green) / 0.3)",
+              }}
             >
-              <motion.span animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.4, repeat: Infinity }}
-                className="w-2 h-2 rounded-full" style={{ background: "hsl(var(--green))" }} />
+              <motion.span
+                animate={{ opacity: [1, 0.3, 1] }}
+                transition={{ duration: 1.4, repeat: Infinity }}
+                className="w-2 h-2 rounded-full"
+                style={{ background: "hsl(var(--green))" }}
+              />
               <span className="text-xs font-bold tracking-[0.18em] uppercase" style={{ color: "hsl(var(--green))" }}>
                 Bangladesh Sports Revolution
               </span>
             </motion.div>
 
             {/* Main headline */}
-            <motion.h1 initial={{ opacity: 0, y: 50 }} animate={heroReady ? { opacity: 1, y: 0 } : {}}
+            <motion.h1
+              initial={{ opacity: 0, y: 50 }}
+              animate={heroReady ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="font-display leading-[0.88] text-white mb-6"
-              style={{ fontSize: "clamp(3.8rem, 11vw, 8.5rem)" }}
+              className="font-display leading-[0.88] text-foreground mb-6"
+              style={{ fontSize: "clamp(3.4rem, 9vw, 7.5rem)" }}
             >
               YOUR TALENT
               <br />
-              <span className="text-gradient" style={{
-                backgroundImage: "linear-gradient(135deg, hsl(142 76% 60%), hsl(142 76% 40%))",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
-              }}>DESERVES</span>
+              <span style={{
+                backgroundImage: "linear-gradient(135deg, hsl(var(--green)), hsl(var(--green-glow)))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}>
+                DESERVES
+              </span>
               <br />
               A STAGE
             </motion.h1>
 
-            <motion.p initial={{ opacity: 0, y: 20 }} animate={heroReady ? { opacity: 1, y: 0 } : {}}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={heroReady ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.7, delay: 0.4 }}
-              className="text-base sm:text-lg text-white/70 max-w-lg mb-10 leading-relaxed">
-              The first platform connecting Bangladesh's grassroots football &amp; cricket talent with verified scouts.
-              Safe. Transparent. Built for you.
+              className="text-base sm:text-lg text-muted-foreground max-w-lg mb-10 leading-relaxed"
+            >
+              The first platform connecting Bangladesh's grassroots football &amp; cricket talent
+              with verified scouts. Safe. Transparent. Built for you.
             </motion.p>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={heroReady ? { opacity: 1, y: 0 } : {}}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={heroReady ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.7, delay: 0.55 }}
-              className="flex flex-col xs:flex-row gap-3">
+              className="flex flex-col xs:flex-row gap-3"
+            >
               {user && role ? (
                 <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"}>
                   <Button size="lg" className="font-bold text-lg px-10 animate-pulse-glow"
-                    style={{ background: "hsl(var(--green))", color: "hsl(0 0% 4%)" }}>
+                    style={{ background: "hsl(var(--green))", color: "hsl(var(--primary-foreground))" }}>
                     Go to Dashboard <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
@@ -205,13 +210,12 @@ const Index = () => {
                 <>
                   <Link to="/auth">
                     <Button size="lg" className="font-bold text-base sm:text-lg px-8 sm:px-10 animate-pulse-glow"
-                      style={{ background: "hsl(var(--green))", color: "hsl(0 0% 4%)" }}>
+                      style={{ background: "hsl(var(--green))", color: "hsl(var(--primary-foreground))" }}>
                       Join as Player <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>
                   <Link to="/auth?role=scout">
-                    <Button size="lg" variant="outline" className="font-semibold text-base sm:text-lg px-8 sm:px-10 text-white"
-                      style={{ borderColor: "rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}>
+                    <Button size="lg" variant="outline" className="font-semibold text-base sm:text-lg px-8 sm:px-10">
                       I'm a Scout
                     </Button>
                   </Link>
@@ -220,8 +224,12 @@ const Index = () => {
             </motion.div>
 
             {/* Mini stat pills */}
-            <motion.div initial={{ opacity: 0 }} animate={heroReady ? { opacity: 1 } : {}} transition={{ delay: 0.9 }}
-              className="flex flex-wrap gap-3 mt-8">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={heroReady ? { opacity: 1 } : {}}
+              transition={{ delay: 0.9 }}
+              className="flex flex-wrap gap-3 mt-8"
+            >
               {[
                 { v: "2,500+", l: "Players" },
                 { v: "120+",   l: "Scouts" },
@@ -229,33 +237,25 @@ const Index = () => {
                 { v: "8",      l: "Divisions" },
               ].map((s) => (
                 <div key={s.l} className="flex items-center gap-2 rounded-full px-3 py-1.5 border"
-                  style={{ background: "rgba(255,255,255,0.07)", borderColor: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)" }}>
+                  style={{ background: "hsl(var(--muted) / 0.6)", borderColor: "hsl(var(--border))" }}>
                   <span className="text-sm font-bold" style={{ color: "hsl(var(--green))" }}>{s.v}</span>
-                  <span className="text-xs text-white/60">{s.l}</span>
+                  <span className="text-xs text-muted-foreground">{s.l}</span>
                 </div>
               ))}
             </motion.div>
           </div>
-
-          {/* Right — floating cards */}
-          <div className="hidden lg:block relative w-80 h-96 flex-shrink-0">
-            <FloatingBadge icon={TrendingUp} label="Talents Discovered" value="340+ This Season" delay={0.8}
-              className="top-0 right-0" />
-            <FloatingBadge icon={Shield} label="Verified Scouts" value="120+ Active" delay={1.0}
-              className="top-28 left-0 animate-float-delayed" />
-            <FloatingBadge icon={MapPin} label="Divisions Covered" value="All 8 Divisions" delay={1.2}
-              className="bottom-8 right-4" />
-            <FloatingBadge icon={Star} label="Success Rate" value="94% Match Rate" delay={1.4}
-              className="bottom-32 left-6 animate-float-delayed" />
-          </div>
         </motion.div>
 
         {/* Scroll nudge */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1.5">
-          <span className="text-[10px] tracking-[0.25em] uppercase text-white/40">Scroll</span>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1.5"
+        >
+          <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground/50">Scroll</span>
           <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.4, repeat: Infinity }}>
-            <ChevronDown className="h-5 w-5 text-white/30" />
+            <ChevronDown className="h-5 w-5 text-muted-foreground/40" />
           </motion.div>
         </motion.div>
       </section>
