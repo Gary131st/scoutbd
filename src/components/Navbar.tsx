@@ -2,7 +2,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Zap, LogOut, Sun, Moon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import NotificationBell from "@/components/NotificationBell";
@@ -17,6 +16,7 @@ const navLinks = [
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const lastScrollY = useRef(0);
   const location = useLocation();
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ const Navbar = () => {
   useEffect(() => {
     const onScroll = () => {
       const current = window.scrollY;
-      // hide when scrolling down past 80px, show when scrolling up
+      setScrolled(current > 40);
       if (current > 80 && current > lastScrollY.current) {
         setHidden(true);
       } else {
@@ -45,71 +45,128 @@ const Navbar = () => {
 
   return (
     <motion.nav
-      className="fixed top-0 left-0 right-0 z-50 bg-transparent"
+      className="fixed top-0 left-0 right-0 z-50"
       animate={{ y: hidden ? "-100%" : "0%" }}
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        background: scrolled
+          ? "rgba(255,255,255,0.08)"
+          : "transparent",
+        backdropFilter: scrolled ? "blur(28px) saturate(180%)" : "none",
+        WebkitBackdropFilter: scrolled ? "blur(28px) saturate(180%)" : "none",
+        borderBottom: scrolled ? "1px solid rgba(255,255,255,0.1)" : "none",
+        transition: "background 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease",
+      }}
     >
       <div className="container flex items-center justify-between h-16 gap-4">
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <Zap className="h-6 w-6 text-primary" />
-          <span className="font-display text-xl sm:text-2xl tracking-wider text-foreground">
-            SCOUT <span className="text-primary">BD</span>
+          <Zap className="h-5 w-5" style={{ color: "hsl(var(--green))" }} />
+          <span className="font-display text-xl sm:text-2xl tracking-wider"
+            style={{ color: scrolled ? "hsl(var(--foreground))" : "rgba(255,255,255,0.95)" }}>
+            SCOUT <span style={{ color: "hsl(var(--green))" }}>BD</span>
           </span>
         </Link>
 
         {/* Desktop */}
-        <div className="hidden md:flex items-center gap-4 lg:gap-6 overflow-hidden">
+        <div className="hidden md:flex items-center gap-5 lg:gap-6">
           {navLinks.map((l) => (
             <Link
               key={l.path}
               to={l.path}
-              className={`text-sm font-medium transition-colors hover:text-primary whitespace-nowrap ${
-                location.pathname === l.path ? "text-primary" : "text-muted-foreground"
-              }`}
+              className="text-sm font-medium transition-colors whitespace-nowrap"
+              style={{
+                color: location.pathname === l.path
+                  ? "hsl(var(--green))"
+                  : scrolled ? "hsl(var(--muted-foreground))" : "rgba(255,255,255,0.7)",
+              }}
             >
               {l.label}
             </Link>
           ))}
+
           {user ? (
             <div className="flex items-center gap-2 shrink-0">
               <NotificationBell />
               <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"}>
-                <Button size="sm" variant="outline" className="border-primary/40 text-primary hover:bg-primary/10 whitespace-nowrap">
+                <button
+                  className="text-xs font-bold tracking-wide px-4 py-2 rounded-full transition-all duration-200"
+                  style={{
+                    background: "rgba(255,255,255,0.12)",
+                    border: "1px solid rgba(255,255,255,0.22)",
+                    backdropFilter: "blur(12px)",
+                    color: scrolled ? "hsl(var(--foreground))" : "rgba(255,255,255,0.92)",
+                  }}
+                >
                   Dashboard
-                </Button>
+                </button>
               </Link>
-              <Button size="sm" variant="ghost" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground">
-                <LogOut className="h-4 w-4" />
-              </Button>
+              <button
+                onClick={handleSignOut}
+                className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200"
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  color: scrolled ? "hsl(var(--muted-foreground))" : "rgba(255,255,255,0.6)",
+                }}
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
             </div>
           ) : (
             <Link to="/auth" className="shrink-0">
-              <Button size="sm" className="bg-primary text-primary-foreground font-semibold hover:bg-primary/90">
+              <button
+                className="text-xs font-bold tracking-wide px-5 py-2 rounded-full transition-all duration-200"
+                style={{
+                  background: "hsl(var(--green))",
+                  color: "#fff",
+                  boxShadow: "0 2px 16px hsl(var(--green) / 0.4)",
+                }}
+              >
                 Get Started
-              </Button>
+              </button>
             </Link>
           )}
+
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200"
             aria-label="Toggle theme"
+            style={{
+              background: "rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.18)",
+              backdropFilter: "blur(8px)",
+              color: scrolled ? "hsl(var(--foreground))" : "rgba(255,255,255,0.75)",
+            }}
           >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
           </button>
         </div>
 
-        {/* Mobile: theme toggle + hamburger */}
+        {/* Mobile */}
         <div className="md:hidden flex items-center gap-2 shrink-0">
           <button
             onClick={toggleTheme}
-            className="w-8 h-8 flex items-center justify-center rounded-full border border-border/60 text-muted-foreground hover:text-foreground transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200"
             aria-label="Toggle theme"
+            style={{
+              background: "rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.18)",
+              color: scrolled ? "hsl(var(--foreground))" : "rgba(255,255,255,0.75)",
+            }}
           >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
           </button>
-          <button className="text-foreground p-1" onClick={() => setOpen(!open)}>
-            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200"
+            onClick={() => setOpen(!open)}
+            style={{
+              background: "rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.18)",
+              color: scrolled ? "hsl(var(--foreground))" : "rgba(255,255,255,0.85)",
+            }}
+          >
+            {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
         </div>
       </div>
@@ -121,19 +178,23 @@ const Navbar = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden border-t border-border overflow-hidden"
-            style={{ background: "hsl(var(--background) / 0.95)", backdropFilter: "blur(16px)" }}
+            transition={{ duration: 0.28 }}
+            className="md:hidden overflow-hidden"
+            style={{
+              background: "rgba(10,10,10,0.75)",
+              backdropFilter: "blur(32px) saturate(180%)",
+              WebkitBackdropFilter: "blur(32px) saturate(180%)",
+              borderTop: "1px solid rgba(255,255,255,0.08)",
+            }}
           >
-            <div className="container py-4 flex flex-col gap-3">
+            <div className="container py-5 flex flex-col gap-3">
               {navLinks.map((l) => (
                 <Link
                   key={l.path}
                   to={l.path}
                   onClick={() => setOpen(false)}
-                  className={`text-sm font-medium py-2 ${
-                    location.pathname === l.path ? "text-primary" : "text-muted-foreground"
-                  }`}
+                  className="text-sm font-medium py-2 transition-colors"
+                  style={{ color: location.pathname === l.path ? "hsl(var(--green))" : "rgba(255,255,255,0.65)" }}
                 >
                   {l.label}
                 </Link>
@@ -142,22 +203,26 @@ const Navbar = () => {
                 <>
                   <div className="flex items-center gap-2">
                     <NotificationBell />
-                    <span className="text-sm text-muted-foreground">Notifications</span>
+                    <span className="text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>Notifications</span>
                   </div>
                   <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"} onClick={() => setOpen(false)}>
-                    <Button size="sm" variant="outline" className="w-full border-primary/40 text-primary">
+                    <button className="w-full text-sm font-bold py-2.5 rounded-full"
+                      style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.9)" }}>
                       Dashboard
-                    </Button>
+                    </button>
                   </Link>
-                  <Button size="sm" variant="ghost" onClick={() => { handleSignOut(); setOpen(false); }} className="text-muted-foreground">
+                  <button onClick={() => { handleSignOut(); setOpen(false); }}
+                    className="text-sm py-2 text-left transition-colors"
+                    style={{ color: "rgba(255,255,255,0.5)" }}>
                     Sign Out
-                  </Button>
+                  </button>
                 </>
               ) : (
                 <Link to="/auth" onClick={() => setOpen(false)}>
-                  <Button size="sm" className="w-full bg-primary text-primary-foreground font-semibold">
+                  <button className="w-full text-sm font-bold py-2.5 rounded-full"
+                    style={{ background: "hsl(var(--green))", color: "#fff" }}>
                     Get Started
-                  </Button>
+                  </button>
                 </Link>
               )}
             </div>
