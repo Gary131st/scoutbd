@@ -91,21 +91,11 @@ function GlassCard({ children, className = "", style = {} }: {
    SCROLL TRANSITION — sport blobs dissolve in
 ════════════════════════════════════════════ */
 function ScrollTransition() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const blobs = [
-    { cx: "20%", cy: "40%", r: 180, color: "hsl(142 76% 46% / 0.18)", delay: 0 },
-    { cx: "70%", cy: "60%", r: 220, color: "hsl(142 76% 36% / 0.12)", delay: 0.15 },
-    { cx: "50%", cy: "20%", r: 140, color: "hsl(142 76% 56% / 0.10)", delay: 0.08 },
-  ];
-
   return (
-    <div ref={ref} className="relative overflow-hidden" style={{ height: "180px", marginTop: "-1px" }}>
-      {/* Background fade from hero to page */}
+    <div className="relative overflow-hidden" style={{ height: "120px" }}>
       <div className="absolute inset-0" style={{
         background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background)) 100%)"
       }} />
-      {/* Animated sport icon particles rising up */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         {["⚽", "🏏", "🏀", "🎾", "🏸"].map((emoji, i) => (
           <motion.span
@@ -115,27 +105,19 @@ function ScrollTransition() {
             whileInView={{ opacity: [0, 0.7, 0] as any, y: -20, scale: [0.5, 1, 0.8] as any }}
             viewport={{ once: false, margin: "-20px" }}
             transition={{ duration: 2.2, delay: i * 0.18, ease: "easeOut", repeat: Infinity, repeatDelay: 3 }}
-            style={{
-              left: `${15 + i * 17}%`,
-              filter: "drop-shadow(0 0 8px hsl(142 76% 46% / 0.6))",
-            }}
+            style={{ left: `${15 + i * 17}%`, filter: "drop-shadow(0 0 8px hsl(142 76% 46% / 0.6))" }}
           >
             {emoji}
           </motion.span>
         ))}
       </div>
-      {/* Glowing line */}
       <motion.div
         className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2"
         initial={{ scaleX: 0, opacity: 0 }}
         whileInView={{ scaleX: 1, opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-        style={{
-          width: "60%",
-          height: "1px",
-          background: "linear-gradient(90deg, transparent, hsl(var(--green)), transparent)",
-        }}
+        style={{ width: "60%", height: "1px", background: "linear-gradient(90deg, transparent, hsl(var(--green)), transparent)" }}
       />
     </div>
   );
