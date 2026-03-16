@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   ArrowRight, Users, Shield, Trophy, Twitter, Facebook,
-  Instagram, Youtube, ChevronDown, Zap
+  Instagram, Youtube, Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import BangladeshMapTestimonials from "@/components/BangladeshMapTestimonials";
 import MarqueeTicker from "@/components/MarqueeTicker";
 import VideoHighlights from "@/components/VideoHighlights";
-import heroVideo from "@/assets/hero-sports.mp4";
+import CinematicHero from "@/components/CinematicHero";
 
 const socialLinks = [
   { Icon: Facebook,  label: "Facebook",    href: "https://facebook.com/scoutbd",  color: "hover:text-blue-500" },
