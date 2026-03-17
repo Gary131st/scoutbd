@@ -68,7 +68,7 @@ function Reveal({ children, delay = 0, className = "", direction = "up" }: {
 ════════════════════════════════════════════ */
 const Index = () => {
   const { user, role } = useAuth();
-  const [verifiedScouts, setVerifiedScouts] = useState<ScoutProfile[]>();
+  const [verifiedScouts, setVerifiedScouts] = useState<ScoutProfile[]>([]);
 
   useEffect(() => {
     const fetchScouts = async () => {
