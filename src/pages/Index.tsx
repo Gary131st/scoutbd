@@ -84,17 +84,15 @@ const Index = () => {
       })));
     };
     fetchScouts();
-    const t = setTimeout(() => setHeroReady(true), 200);
-    return () => clearTimeout(t);
   }, []);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
 
       {/* ══════════════════════════════════════════
-          HERO — full-bleed video, liquid glass card
+          HERO — Scrollytelling (pinned, 400vh)
       ══════════════════════════════════════════ */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-start overflow-hidden">
+      <ScrollytellingHero user={user} role={role} />
 
         {/* ── FULL-BLEED VIDEO — fills entire hero ── */}
         <motion.div className="absolute inset-0 z-0" style={{ y: videoY, scale: videoScale }}>
