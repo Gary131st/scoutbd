@@ -69,7 +69,6 @@ function Reveal({ children, delay = 0, className = "", direction = "up" }: {
 const Index = () => {
   const { user, role } = useAuth();
   const [verifiedScouts, setVerifiedScouts] = useState<ScoutProfile[]>([]);
-  const [heroReady, setHeroReady] = useState(false);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
