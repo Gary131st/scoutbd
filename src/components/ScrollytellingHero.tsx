@@ -73,7 +73,7 @@ export default function ScrollytellingHero({
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["top top", "bottom bottom"],
+    offset: ["start start", "end end"],
   });
 
   // Scene 1: Intro (0–25%)
