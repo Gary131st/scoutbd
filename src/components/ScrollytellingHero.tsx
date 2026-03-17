@@ -322,30 +322,7 @@ export default function ScrollytellingHero({
         </div>
 
         {/* Scene progress indicator */}
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-20">
-          {[0.125, 0.375, 0.625, 0.875].map((prog, i) => {
-            const labels = ["Intro", "Football", "Cricket", "Basketball"];
-            return (
-              <motion.div
-                key={i}
-                style={{
-                  opacity: useTransform(
-                    scrollYProgress,
-                    [prog - 0.125, prog, prog + 0.125],
-                    [0.25, 1, 0.25]
-                  ),
-                  scaleX: useTransform(
-                    scrollYProgress,
-                    [prog - 0.125, prog, prog + 0.125],
-                    [0.5, 1, 0.5]
-                  ),
-                }}
-                className="w-1 rounded-full origin-left"
-                style={{ height: i === 0 ? 28 : 16, background: "rgba(255,255,255,0.6)" } as any}
-              />
-            );
-          })}
-        </div>
+        <ProgressDots scrollYProgress={scrollYProgress} />
       </div>
     </div>
   );
