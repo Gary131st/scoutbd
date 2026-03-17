@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import React from "react";
+import { motion, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   ArrowRight, Users, Shield, Trophy, Twitter, Facebook,
-  Instagram, Youtube, ChevronDown, Zap
+  Instagram, Youtube, Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import BangladeshMapTestimonials from "@/components/BangladeshMapTestimonials";
 import MarqueeTicker from "@/components/MarqueeTicker";
 import VideoHighlights from "@/components/VideoHighlights";
-import heroVideo from "@/assets/hero-sports.mp4";
+import ScrollytellingHero from "@/components/ScrollytellingHero";
 
 const socialLinks = [
   { Icon: Facebook,  label: "Facebook",    href: "https://facebook.com/scoutbd",  color: "hover:text-blue-500" },
@@ -67,14 +68,7 @@ function Reveal({ children, delay = 0, className = "", direction = "up" }: {
 ════════════════════════════════════════════ */
 const Index = () => {
   const { user, role } = useAuth();
-  const [verifiedScouts, setVerifiedScouts] = useState<ScoutProfile[]>([]);
-  const [heroReady, setHeroReady] = useState(false);
-
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-  const videoY      = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
-  const videoScale  = useTransform(scrollYProgress, [0, 0.7], [1, 1.06]);
+  const [verifiedScouts, setVerifiedScouts] = useState<ScoutProfile[]>();
 
   useEffect(() => {
     const fetchScouts = async () => {
@@ -90,192 +84,15 @@ const Index = () => {
       })));
     };
     fetchScouts();
-    const t = setTimeout(() => setHeroReady(true), 200);
-    return () => clearTimeout(t);
   }, []);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
 
       {/* ══════════════════════════════════════════
-          HERO — full-bleed video, liquid glass card
+          HERO — Scrollytelling (pinned, 400vh)
       ══════════════════════════════════════════ */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-start overflow-hidden">
-
-        {/* ── FULL-BLEED VIDEO — fills entire hero ── */}
-        <motion.div className="absolute inset-0 z-0" style={{ y: videoY, scale: videoScale }}>
-          <video
-            autoPlay loop muted playsInline preload="auto"
-            className="absolute inset-0 w-full h-full object-cover"
-          >
-            <source src={heroVideo} type="video/mp4" />
-          </video>
-          {/* Very subtle vignette only at extreme edges — keeps video visible */}
-          <div className="absolute inset-0 pointer-events-none" style={{
-            background: "radial-gradient(ellipse 120% 100% at 50% 50%, transparent 55%, rgba(0,0,0,0.45) 100%)"
-          }} />
-        </motion.div>
-
-        {/* ── Bottom fade into page ── */}
-        <div className="absolute bottom-0 left-0 right-0 z-[3] pointer-events-none" style={{
-          height: "28%",
-          background: "linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%)"
-        }} />
-
-        {/* ── LIQUID GLASS CARD — floats over video, iOS-style ── */}
-        <motion.div
-          style={{ opacity: heroOpacity }}
-          className="relative z-10 container pt-28 pb-24 flex items-center"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.97 }}
-            animate={heroReady ? { opacity: 1, y: 0, scale: 1 } : {}}
-            transition={{ duration: 0.9, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-            className="relative max-w-xl w-full rounded-3xl overflow-hidden p-8 sm:p-12"
-            style={{
-              /* iOS liquid glass: near-transparent with heavy blur */
-              background: "rgba(255,255,255,0.12)",
-              backdropFilter: "blur(48px) saturate(200%) brightness(1.08)",
-              WebkitBackdropFilter: "blur(48px) saturate(200%) brightness(1.08)",
-              /* Specular rim — very faint white border that fades on bottom-right */
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.45), inset 1px 0 0 rgba(255,255,255,0.2), 0 24px 80px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.12)",
-              border: "1px solid rgba(255,255,255,0.22)",
-              /* Soft bottom/right edge dissolve via gradient border trick */
-              WebkitMaskImage: "radial-gradient(ellipse 110% 105% at 30% 40%, black 60%, rgba(0,0,0,0.92) 75%, rgba(0,0,0,0.6) 88%, transparent 100%)",
-              maskImage: "radial-gradient(ellipse 110% 105% at 30% 40%, black 60%, rgba(0,0,0,0.92) 75%, rgba(0,0,0,0.6) 88%, transparent 100%)",
-            }}
-          >
-            {/* Specular highlight streak across top-left (depth effect) */}
-            <div className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{
-              background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.7) 30%, rgba(255,255,255,0.3) 60%, transparent 100%)"
-            }} />
-            <div className="absolute top-0 left-0 bottom-0 w-px pointer-events-none" style={{
-              background: "linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.15) 50%, transparent 100%)"
-            }} />
-
-            {/* Live badge */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={heroReady ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="inline-flex items-center gap-2.5 rounded-full px-4 py-2 mb-7"
-              style={{
-                background: "rgba(255,255,255,0.15)",
-                border: "1px solid rgba(255,255,255,0.3)",
-                backdropFilter: "blur(8px)",
-              }}
-            >
-              <motion.span
-                animate={{ opacity: [1, 0.3, 1] }}
-                transition={{ duration: 1.4, repeat: Infinity }}
-                className="w-2 h-2 rounded-full"
-                style={{ background: "hsl(var(--green))" }}
-              />
-              <span className="text-xs font-bold tracking-[0.18em] uppercase" style={{ color: "hsl(var(--green))" }}>
-                Bangladesh Sports Revolution
-              </span>
-            </motion.div>
-
-            {/* Main headline */}
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={heroReady ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.9, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="font-display leading-[0.88] mb-6"
-              style={{ fontSize: "clamp(3rem, 8vw, 6.5rem)", color: "rgba(255,255,255,0.96)" }}
-            >
-              YOUR TALENT
-              <br />
-              <span style={{
-                backgroundImage: "linear-gradient(135deg, hsl(var(--green)), hsl(142 90% 65%))",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}>
-                DESERVES
-              </span>
-              <br />
-              A STAGE
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 16 }}
-              animate={heroReady ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.7, delay: 0.5 }}
-              className="text-base sm:text-lg mb-10 leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.72)" }}
-            >
-              The first platform connecting Bangladesh's grassroots football &amp; cricket talent
-              with verified scouts. Safe. Transparent. Built for you.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={heroReady ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.7, delay: 0.62 }}
-              className="flex flex-col xs:flex-row gap-3"
-            >
-              {user && role ? (
-                <Link to={role === "admin" ? "/admin" : role === "scout" ? "/scout" : "/player"}>
-                  <Button size="lg" className="font-bold text-lg px-10 animate-pulse-glow"
-                    style={{ background: "hsl(var(--green))", color: "#fff" }}>
-                    Go to Dashboard <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-              ) : (
-                <>
-                  <Link to="/auth">
-                    <Button size="lg" className="font-bold text-base sm:text-lg px-8 sm:px-10 animate-pulse-glow"
-                      style={{ background: "hsl(var(--green))", color: "#fff" }}>
-                      Join as Player <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </Link>
-                  <Link to="/auth?role=scout">
-                    <Button size="lg" className="font-semibold text-base sm:text-lg px-8 sm:px-10"
-                      style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)" }}>
-                      I'm a Scout
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </motion.div>
-
-            {/* Stat pills */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={heroReady ? { opacity: 1 } : {}}
-              transition={{ delay: 0.9 }}
-              className="flex flex-wrap gap-3 mt-8"
-            >
-              {[
-                { v: "2,500+", l: "Players" },
-                { v: "120+",   l: "Scouts" },
-                { v: "৳100",   l: "Registration" },
-                { v: "8",      l: "Divisions" },
-              ].map((s) => (
-                <div key={s.l} className="flex items-center gap-2 rounded-full px-3 py-1.5"
-                  style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)" }}>
-                  <span className="text-sm font-bold" style={{ color: "hsl(var(--green))" }}>{s.v}</span>
-                  <span className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>{s.l}</span>
-                </div>
-              ))}
-            </motion.div>
-          </motion.div>
-        </motion.div>
-
-        {/* Scroll nudge */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1.5"
-        >
-          <span className="text-[10px] tracking-[0.25em] uppercase" style={{ color: "rgba(255,255,255,0.35)" }}>Scroll</span>
-          <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.4, repeat: Infinity }}>
-            <ChevronDown className="h-5 w-5" style={{ color: "rgba(255,255,255,0.3)" }} />
-          </motion.div>
-        </motion.div>
-      </section>
+      <ScrollytellingHero user={user} role={role} />
 
       {/* ══════════════════════════════════════════
           MARQUEE
