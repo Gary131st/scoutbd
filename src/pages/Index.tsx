@@ -68,13 +68,7 @@ function Reveal({ children, delay = 0, className = "", direction = "up" }: {
 ════════════════════════════════════════════ */
 const Index = () => {
   const { user, role } = useAuth();
-  const [verifiedScouts, setVerifiedScouts] = useState<ScoutProfile[]>([]);
-
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-  const videoY      = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
-  const videoScale  = useTransform(scrollYProgress, [0, 0.7], [1, 1.06]);
+  const [verifiedScouts, setVerifiedScouts] = useState<ScoutProfile[]>();
 
   useEffect(() => {
     const fetchScouts = async () => {
