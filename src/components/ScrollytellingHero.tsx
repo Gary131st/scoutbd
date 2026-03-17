@@ -62,6 +62,27 @@ function SceneCard({ children, opacity, y, scale }: {
   );
 }
 
+/* ── Scene progress dots ── */
+function ProgressDot({ scrollYProgress, prog, height }: { scrollYProgress: any; prog: number; height: number }) {
+  const opacity = useTransform(scrollYProgress, [prog - 0.125, prog, prog + 0.125], [0.25, 1, 0.25]);
+  const scaleX  = useTransform(scrollYProgress, [prog - 0.125, prog, prog + 0.125], [0.5, 1, 0.5]);
+  return (
+    <motion.div
+      style={{ opacity, scaleX, height, background: "rgba(255,255,255,0.6)" }}
+      className="w-1 rounded-full origin-left"
+    />
+  );
+}
+function ProgressDots({ scrollYProgress }: { scrollYProgress: any }) {
+  return (
+    <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-20">
+      {[0.125, 0.375, 0.625, 0.875].map((prog, i) => (
+        <ProgressDot key={i} scrollYProgress={scrollYProgress} prog={prog} height={i === 0 ? 28 : 16} />
+      ))}
+    </div>
+  );
+}
+
 export default function ScrollytellingHero({
   user,
   role,
